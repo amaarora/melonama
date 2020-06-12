@@ -4,6 +4,8 @@ from tqdm import tqdm
 from PIL import Image
 from joblib import Parallel, delayed
 
+# to run simply run the command `python resize_images.py`
+
 def resize_and_save(path, output_path, sz: tuple):
     fn = os.path.basename(path)  
     im = Image.open(path)
