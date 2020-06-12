@@ -12,4 +12,4 @@ if __name__ == '__main__':
     targets = df.target.values
     for fold, (train_index, test_index) in enumerate(kf.split(X=df, y=targets)):
         df.loc[test_index, 'kfold'] = fold
-    df.to_csv(os.path.join(input_path, "train_folds.csv"))
+    df.to_csv(os.path.join(input_path, "train_folds.csv"), index=False)
