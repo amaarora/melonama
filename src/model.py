@@ -15,4 +15,4 @@ class SeResnext50_32x4D(nn.Module):
         out = self.model(images)
         out = self.out(out)
         loss = nn.BCEWithLogitsLoss()(out, targets)
-        return loss, out
+        return out, loss
