@@ -34,14 +34,17 @@ def evaluate(args, valid_loader, model):
     final_preds = []
     model.eval()
     with torch.no_grad():
-        for data in tqdm(valid_loader, total=len(valid_loader)):
+        tk0 = tqdm(valid_loader, total=len(valid_loader))
+        for data in tk0:
             images  = data['image']
             targets = data['target']
             images  = images.to(args.device)
             targets = targets.to(args.device)
             preds, loss = model(images=images, targets=targets)
             losses.update(loss.item(), valid_loader.batch_size)
-            final_preds.append(preds.cpu())
+            preds = preds.cpu()
+            final_preds.append(preds)
+            tk0.set_postfix(loss=losses.avg)
     return final_preds, losses.avg
         
 
