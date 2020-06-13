@@ -147,7 +147,7 @@ def main():
         auc = metrics.roc_auc_score(valid_targets, predictions)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)
-        es(auc, model, model_path=f"model_fold_{args.fold}.bin")
+        es(auc, model, model_path=f"model_fold_{args.kfold}.bin")
         if es.early_stop:
             print("Early stopping!")
             break
