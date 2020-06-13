@@ -10,6 +10,7 @@ from tqdm import tqdm
 from average_meter import AverageMeter
 import sklearn
 import os
+from sklearn import metrics
 
 def train_one_epoch(args, train_loader, model, optimizer):
     losses = AverageMeter()
@@ -143,7 +144,7 @@ def main():
         train_loss = train_one_epoch(args, train_loader, model, optimizer)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack((preds)).ravel()
-        auc = sklearn.metrics.roc_auc_score(valid_targets, predictions)
+        auc = metrics.roc_auc_score(valid_targets, predictions)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)
         es(auc, model, model_path=f"model_fold_{args.fold}.bin")
