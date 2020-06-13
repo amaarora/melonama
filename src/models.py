@@ -2,10 +2,6 @@ import pretrainedmodels
 import torch.nn as nn
 from torch.nn import functional as F
 
-MODEL_DISPATCHER = {
-    'serexnext_50': pretrainedmodels.se_resnext50_32x4d
-}
-
 class SeResnext50_32x4D(nn.Module):
     def __init__(self, pretrained):
         super(SeResnext50_32x4D, self).__init__()
@@ -18,5 +14,5 @@ class SeResnext50_32x4D(nn.Module):
         out = F.adaptive_avg_pool2d(out, 1)
         out = out.reshape(bs, -1)
         out = self.out(out)
-        loss = nn.BCEWithLogitsLoss()(out, targets)
+        loss = nn.BCEWithLogitsLoss()(out, targets.view(-1, 1).type_as(out))
         return out, loss

@@ -1,7 +1,7 @@
 import torch 
 import numpy as np
 import argparse
-from models import MODEL_DISPATCHER
+from model_dispatcher import MODEL_DISPATCHER
 from dataset import MelonamaDataset
 import pandas as pd
 import albumentations
@@ -9,6 +9,7 @@ from early_stopping import EarlyStopping
 from tqdm import tqdm
 from average_meter import AverageMeter
 import sklearn
+import os
 
 def train_one_epoch(args, train_loader, model, optimizer):
     losses = AverageMeter()
@@ -19,7 +20,7 @@ def train_one_epoch(args, train_loader, model, optimizer):
         images  = images.to(args.device)
         targets = targets.to(args.device)
         optimizer.zero_grad()
-        _, loss = model(images=targets, targets=targets)
+        _, loss = model(images=images, targets=targets)
         loss.backward()
         optimizer.step()
         losses.update(loss.item(), train_loader.batch_size)
@@ -35,7 +36,7 @@ def evaluate(args, valid_loader, model):
         targets = data['target']
         images  = images.to(args.device)
         targets = targets.to(args.device)
-        preds, loss = model(images=targets, targets=targets)
+        preds, loss = model(images=images, targets=targets)
         losses.update(loss.item(), valid_loader.batch_size)
         final_preds.append(preds.cpu())
     return final_preds, losses.avg
@@ -73,7 +74,7 @@ def main():
         help="Path to train data files."
     )
     parser.add_argument(
-        '--fold', 
+        '--kfold', 
         required=True,
         type=int,  
         help="Fold for which to run training and validation."
@@ -86,11 +87,11 @@ def main():
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
 
     args = parser.parse_args()
-
+    
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
-    df_train = df.query("kfold != {args.fold}").reset_index(drop=True)
-    df_valid = df.query("kfold == {args.fold}").reset_index(drop=True)
+    df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
+    df_valid = df.query(f"kfold == {args.kfold}").reset_index(drop=True)
 
     # create model
     model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
@@ -109,11 +110,11 @@ def main():
     
     # get train and valid images & targets
     train_images = df_train.image_name.tolist()
-    train_image_paths = [os.path.join(args.data_dir, 'train_224/'+image_name+'.jpg') for image_name in train_images]
+    train_image_paths = [os.path.join(args.data_dir, 'train224/'+image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target
 
     valid_images = df_valid.image_name.tolist()
-    valid_image_paths = [os.path.join(args.data_dir, 'train_224/'+image_name+'.jpg') for image_name in valid_images]
+    valid_image_paths = [os.path.join(args.data_dir, 'train224/'+image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
 
     # create train and valid dataset
@@ -133,11 +134,11 @@ def main():
     es = EarlyStopping(patience=5, mode='max')
 
     for epoch in range(args.epochs):
-        train_loss = train_one_epoch(train_loader, model, optimizer, device)
-        preds, valid_loss = evaluate(valid_loader, model, device)
+        train_loss = train_one_epoch(args, train_loader, model, optimizer)
+        preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack((preds)).ravel()
         auc = sklearn.metrics.roc_auc_score(valid_targets, predictions)
-        print(f"Epoch: {epoch}, AUC: {auc}")
+        print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)
         es(auc, model, model_path=f"model_fold_{args.fold}.bin")
         if es.early_stop:
