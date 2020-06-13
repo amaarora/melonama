@@ -28,8 +28,9 @@ def train_one_epoch(args, train_loader, model, optimizer):
         targets = targets.to(args.device)
         optimizer.zero_grad()
         _, loss = model(images=images, targets=targets)
-        loss.backward()
-        optimizer.step()
+        with torch.set_grad_enabled(True): 
+            loss.backward()
+            optimizer.step()
         losses.update(loss.item(), train_loader.batch_size)
         tk0.set_postfix(loss=losses.avg)
     return losses.avg
@@ -115,6 +116,8 @@ def main():
     
     train_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
+        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
+        albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
@@ -135,7 +138,7 @@ def main():
 
     # create dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True, num_workers=4)
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.valid_batch_size, shuffle=True, num_workers=4)
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.valid_batch_size, shuffle=False, num_workers=4)
 
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)

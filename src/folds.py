@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 if __name__ == '__main__':
     input_path = "/home/ubuntu/repos/kaggle/melonama/data/"
-    kf = model_selection.StratifiedKFold(n_splits=8)
+    kf = model_selection.StratifiedKFold(n_splits=5)
     df = pd.read_csv(os.path.join(input_path, 'train.csv'))
     df['kfold'] = -1
     df = df.sample(frac=1).reset_index(drop=True)

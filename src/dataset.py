@@ -23,5 +23,5 @@ class MelonamaDataset:
         
         return {
             'image': torch.tensor(image, dtype=torch.float), 
-            'target': target
+            'target': torch.tensor(target, dtype=torch.long)
         }
