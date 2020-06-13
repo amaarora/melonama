@@ -14,7 +14,8 @@ import os
 def train_one_epoch(args, train_loader, model, optimizer):
     losses = AverageMeter()
     model.train()
-    for data in tqdm(train_loader, total=len(train_loader), postfix=losses.avg):
+    tk0 = tqdm(train_loader, total=len(train_loader))
+    for data in tk0:
         images  = data['image']
         targets = data['target']
         images  = images.to(args.device)
@@ -24,21 +25,23 @@ def train_one_epoch(args, train_loader, model, optimizer):
         loss.backward()
         optimizer.step()
         losses.update(loss.item(), train_loader.batch_size)
-        return losses.avg
+        tk0.set_postfix(loss=losses.avg)
+    return losses.avg
         
 
 def evaluate(args, valid_loader, model):
     losses = AverageMeter()
     final_preds = []
     model.eval()
-    for data in tqdm(valid_loader, total=len(valid_loader)):
-        images  = data['image']
-        targets = data['target']
-        images  = images.to(args.device)
-        targets = targets.to(args.device)
-        preds, loss = model(images=images, targets=targets)
-        losses.update(loss.item(), valid_loader.batch_size)
-        final_preds.append(preds.cpu())
+    with torch.no_grad():
+        for data in tqdm(valid_loader, total=len(valid_loader)):
+            images  = data['image']
+            targets = data['target']
+            images  = images.to(args.device)
+            targets = targets.to(args.device)
+            preds, loss = model(images=images, targets=targets)
+            losses.update(loss.item(), valid_loader.batch_size)
+            final_preds.append(preds.cpu())
     return final_preds, losses.avg
         
 
