@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+from pathlib import Path
+import os
 
 
 class EarlyStopping:
@@ -40,6 +42,9 @@ class EarlyStopping:
             self.counter = 0
 
     def save_checkpoint(self, epoch_score, model, model_path):
+        model_path = Path(model_path)
+        parent = model_path.parent
+        os.makedirs(parent, exist_ok=True)
         if epoch_score not in [-np.inf, np.inf, -np.nan, np.nan]:
             print(
                 "Validation score improved ({} --> {}). Saving model!".format(
