@@ -65,7 +65,7 @@ def main():
     parser.add_argument('--device', default='cuda', type=str, help="Device on which to run predictions.")
     parser.add_argument('--test_batch_size', default=64, type=int, help="Test batch size.")
     parser.add_argument('--submission_file', default="/home/ubuntu/repos/kaggle/melonama/data/sample_submission.csv", type=str, help="Test batch size.")
-    parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output/", type=str, help="Test batch size.")
+    parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output", type=str, help="Test batch size.")
     
     args = parser.parse_args()
 
@@ -104,7 +104,7 @@ def main():
     sub = pd.read_csv(args.submission_file)
     sub['target'] = predictions
     sub.to_csv(f"{args.output_dir}/submission.csv", index=False)
-    print(f"submission file created at {args.output_dir}submission.csv.")
+    print(f"submission file created at {args.output_dir}/submission.csv.")
 
 
 if __name__ == '__main__':
