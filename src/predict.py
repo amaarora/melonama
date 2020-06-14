@@ -100,12 +100,6 @@ def main():
     np.save(f"{args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy", predictions)
     print(f"Predictions saved at {args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy")
 
-    # now read sample submission file
-    sub = pd.read_csv(args.submission_file)
-    sub['target'] = predictions
-    sub.to_csv(f"{args.output_dir}/submission.csv", index=False)
-    print(f"submission file created at {args.output_dir}/submission.csv.")
-
 
 if __name__ == '__main__':
     main()
