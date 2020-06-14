@@ -24,7 +24,6 @@ python train.py --model_name se_resnext_50 \
 To run predictions:
 ```
 python predict.py --model_name se_resnext_50 \
-    --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0_003845.bin \
+    --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0.bin \
     --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 \
-    --num_folds 5 
 ```

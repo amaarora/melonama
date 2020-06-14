@@ -155,7 +155,7 @@ def main():
         auc = metrics.roc_auc_score(valid_targets, predictions)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)
-        es(auc, model, model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{syd_now.strftime(r'%H%M%S')}.bin")
+        es(auc, model, model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}.bin")
         if es.early_stop:
             print("Early stopping!")
             break

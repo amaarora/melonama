@@ -17,6 +17,9 @@ import pytz
 import logging
 
 logger = logging.getLogger(__name__)
+tz = pytz.timezone('Australia/Sydney')
+syd_now = datetime.now(tz)
+
 
 def predict(args, test_loader, model):
     model.eval()
@@ -58,13 +61,6 @@ def main():
         required=True, 
         help="Directory where test data files exist."
     )
-    parser.add_argument(
-        "--num_folds", 
-        default=None, 
-        type=str, 
-        required=True, 
-        help="Number of folds for which models were trained."
-    )
     #Other parameters
     parser.add_argument('--device', default='cuda', type=str, help="Device on which to run predictions.")
     parser.add_argument('--test_batch_size', default=64, type=int, help="Test batch size.")
@@ -87,7 +83,9 @@ def main():
     ])
 
     # create test images and create dummy targets
-    test_image_paths = glob.glob(f"{args.test_data_dir}/*.jpg")
+    df_test = pd.read_csv("/home/ubuntu/repos/kaggle/melonama/data/test.csv")
+    test_images = df_test.image_name.tolist()
+    test_image_paths = [os.path.join(args.test_data_dir, image_name+'.jpg') for image_name in test_images]
     test_targets = np.zeros(len(test_image_paths))        
     
     # create test dataset
@@ -99,12 +97,14 @@ def main():
 
     predictions = predict(args, test_loader, model)
     predictions = np.vstack((predictions)).ravel()
-    
+    np.save(f"{args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy", predictions)
+    print(f"Predictions saved at {args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy")
+
     # now read sample submission file
     sub = pd.read_csv(args.submission_file)
     sub['target'] = predictions
     sub.to_csv(f"{args.output_dir}/submission.csv", index=False)
-    logger.info(f"submission file created at {args.output_dir}/submission.csv.")
+    print(f"submission file created at {args.output_dir}/submission.csv.")
 
 
 if __name__ == '__main__':
