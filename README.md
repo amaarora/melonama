@@ -21,9 +21,14 @@ python train.py --model_name se_resnext_50 \
     --epochs 1 
 ```
 
-To run predictions:
+To run predictions: (do this for every model to create a `np` array for each model passed through `model_path`)
 ```
 python predict.py --model_name se_resnext_50 \
     --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0.bin \
     --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 \
+```
+
+To create submission file: (reads each pred file created above and averages the predictions to create ensemble preds.)
+```
+python create_submission.py
 ```
