@@ -20,17 +20,24 @@ syd_now = datetime.now(tz)
 def train_one_epoch(args, train_loader, model, optimizer):
     losses = AverageMeter()
     model.train()
-    tk0 = tqdm(train_loader, total=len(train_loader))
-    for data in tk0:
-        images  = data['image']
-        targets = data['target']
-        images  = images.to(args.device)
-        targets = targets.to(args.device)
+    if args.accumulation_steps > 1: 
+        print(f"Due to gradient accumulation of {args.gradient_accumulation} using global batch size of {args.gradient_accumulation*train_loader.batch_size}")
         optimizer.zero_grad()
+    tk0 = tqdm(train_loader, total=len(train_loader))
+    for b_idx, data in enumerate(tk0):
+        for key, value in data.items():
+            data[key] = value.to(args.device)
+        images = data['image']
+        targets = data['target']
+        if args.accumulation_steps == 1 and b_idx == 0:
+            optimizer.zero_grad()
         _, loss = model(images=images, targets=targets)
-        with torch.set_grad_enabled(True): 
+
+        with torch.set_grad_enabled(True):
             loss.backward()
-            optimizer.step()
+            if (b_idx + 1) % args.accumulation_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
         losses.update(loss.item(), train_loader.batch_size)
         tk0.set_postfix(loss=losses.avg)
     return losses.avg
@@ -98,6 +105,7 @@ def main():
     parser.add_argument('--valid_batch_size', default=32, type=int, help="Validation batch size.")
     parser.add_argument('--learning_rate', default=1e-3, type=float, help="Learning rate.")
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
+    parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
 
     args = parser.parse_args()
     
@@ -162,6 +170,7 @@ def main():
         if es.early_stop:
             print("Early stopping!")
             break
+
 
 if __name__=='__main__':
     main()
