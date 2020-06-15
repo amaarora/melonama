@@ -127,11 +127,11 @@ def main():
     
     # get train and valid images & targets
     train_images = df_train.image_name.tolist()
-    train_image_paths = [os.path.join(args.data_dir, 'train224/'+image_name+'.jpg') for image_name in train_images]
+    train_image_paths = [os.path.join(args.data_dir, 'train224ar/'+image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target
 
     valid_images = df_valid.image_name.tolist()
-    valid_image_paths = [os.path.join(args.data_dir, 'train224/'+image_name+'.jpg') for image_name in valid_images]
+    valid_image_paths = [os.path.join(args.data_dir, 'train224ar/'+image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
 
     # create train and valid dataset
