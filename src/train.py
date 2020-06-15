@@ -126,6 +126,7 @@ def main():
     ])
     
     # get train and valid images & targets
+    #TODO: Add image paths as args
     train_images = df_train.image_name.tolist()
     train_image_paths = [os.path.join(args.data_dir, 'train224ar/'+image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target
