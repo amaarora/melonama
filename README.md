@@ -27,10 +27,17 @@ python predict.py --model_name se_resnext_50 \
     --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0.bin \
     --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 \
 ```
+The predictions are by default created at the path `/home/ubuntu/repos/kaggle/melonama/data/output` and overwrite the past ones. 
+
 
 To create submission file: (reads each pred file created above and averages the predictions to create ensemble preds.)
 ```
 python create_submission.py
+```
+
+To submit the `submission.csv` file to kaggle, simply run: 
+```
+kaggle competitions submit -c siim-isic-melanoma-classification -f submission.csv -m "Message"
 ```
 
 # Training History and Improvements 
