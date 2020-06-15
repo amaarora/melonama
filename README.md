@@ -15,10 +15,10 @@ python train.py --model_name se_resnext_50 \
     --data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg' \
     --kfold 0 \
     --pretrained imagenet \
-    --train_batch_size 64 \
+    --train_batch_size 16 \
     --valid_batch_size 32 \
-    --learning_rate 1e-3 \
-    --epochs 1 
+    --learning_rate 1e-4 \
+    --epochs 50 
 ```
 
 To run predictions: (do this for every model to create a `np` array for each model passed through `model_path`)

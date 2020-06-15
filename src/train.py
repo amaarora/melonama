@@ -116,10 +116,12 @@ def main():
     
     train_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
+        albumentations.RandomResizedCrop(512, 512),
         albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
+        albumentations.CenterCrop(512, 512),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
     ])
     
