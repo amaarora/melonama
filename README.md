@@ -4,7 +4,7 @@ To resize images simply run:
 ```
 mkdir data/train224
 mkdir data/test224
-python resize_images.py # in src dir
+python resize_images.py --input_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train --output_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train224ar --mantain_aspect_ratio True
 ```
 
 To train the model 
