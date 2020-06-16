@@ -21,7 +21,7 @@ def train_one_epoch(args, train_loader, model, optimizer):
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 
-        print(f"Due to gradient accumulation of {args.gradient_accumulation} using global batch size of {args.gradient_accumulation*train_loader.batch_size}")
+        print(f"Due to gradient accumulation of {args.accumulation_steps} using global batch size of {args.accumulation_steps*train_loader.batch_size}")
         optimizer.zero_grad()
     tk0 = tqdm(train_loader, total=len(train_loader))
     for b_idx, data in enumerate(tk0):
