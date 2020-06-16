@@ -89,7 +89,7 @@ def main():
         help="Name selected in the list: " + f"{','.join(MODEL_DISPATCHER.keys())}"
     )
     parser.add_argument(
-        '--data_dir', 
+        '--train_data_dir', 
         required=True, 
         help="Path to train data files."
     )
@@ -106,9 +106,13 @@ def main():
     parser.add_argument('--learning_rate', default=1e-3, type=float, help="Learning rate.")
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
+    parser.add_argument('--sz', default=224, type=int, help="Gradient accumulation steps.")
 
     args = parser.parse_args()
     
+    # convert sz to int
+    if args.sz: args.sz = int(args.sz)
+
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
     df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
@@ -124,23 +128,23 @@ def main():
     
     train_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
-        albumentations.RandomResizedCrop(512, 512),
+        albumentations.RandomResizedCrop(args.sz, args.sz),
         albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
-        albumentations.CenterCrop(512, 512),
+        albumentations.CenterCrop(args.sz, args.sz),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
     ])
     
     # get train and valid images & targets
     #TODO: Add image paths as args
     train_images = df_train.image_name.tolist()
-    train_image_paths = [os.path.join(args.data_dir, 'train224ar/'+image_name+'.jpg') for image_name in train_images]
+    train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target
 
     valid_images = df_valid.image_name.tolist()
-    valid_image_paths = [os.path.join(args.data_dir, 'train224ar/'+image_name+'.jpg') for image_name in valid_images]
+    valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
 
     # create train and valid dataset

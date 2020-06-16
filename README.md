@@ -82,3 +82,36 @@ python train.py --model_name se_resnext_50 \
     --learning_rate 1e-4 \
     --epochs 50 
 ```
+
+## 16 Jun, 2019
+```
+!python ../src/train.py --model_name se_resnext_50     \
+--device cuda     \
+--training_folds_csv \
+'/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
+--data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg'     \
+--kfold 1     \
+--pretrained imagenet     \
+--train_batch_size 16     \
+--valid_batch_size 32     \
+--learning_rate 1e-4     \
+--epochs 50 \
+--accumulation_steps 8
+```
+
+## 17 Jun, 2019 
+```
+python ../src/train.py --model_name se_resnext_50     \
+--device cuda     \
+--training_folds_csv \
+'/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
+--train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_pad_224'     \
+--kfold 0     \
+--pretrained imagenet     \
+--train_batch_size 64     \
+--valid_batch_size 32     \
+--learning_rate 1e-4     \
+--epochs 50 \
+--accumulation_steps 2
+--sz 224
+```
