@@ -13,11 +13,13 @@ import os
 from sklearn import metrics
 from datetime import date, datetime
 import pytz
+import torch.nn as nn
 
 tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
-def train_one_epoch(args, train_loader, model, optimizer):
+def train_one_epoch(args, train_loader, model, optimizer, weights):
+    weights = weights.to(args.device)
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 
@@ -25,13 +27,13 @@ def train_one_epoch(args, train_loader, model, optimizer):
         optimizer.zero_grad()
     tk0 = tqdm(train_loader, total=len(train_loader))
     for b_idx, data in enumerate(tk0):
-        for key, value in data.items():
-            data[key] = value.to(args.device)
         images = data['image']
         targets = data['target']
+        images = images.to(args.device)
+        targets = targets.to(args.device)
         if args.accumulation_steps == 1 and b_idx == 0:
             optimizer.zero_grad()
-        _, loss = model(images=images, targets=targets)
+        _, loss = model(images=images, targets=targets, weights=weights)
 
         with torch.set_grad_enabled(True):
             loss.backward()
@@ -118,6 +120,11 @@ def main():
     df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
     df_valid = df.query(f"kfold == {args.kfold}").reset_index(drop=True)
 
+    # calculate weights for NN loss
+    weights = len(df_train)/df_train.target.value_counts().values 
+    class_weights = torch.FloatTensor(weights)
+    print(f"assigning weights {weights} to loss fn.")
+
     # create model
     model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
     model = model.to(args.device)
@@ -129,7 +136,7 @@ def main():
     train_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
         albumentations.RandomResizedCrop(args.sz, args.sz),
-        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
+        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=360),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
@@ -164,7 +171,7 @@ def main():
     es = EarlyStopping(patience=5, mode='max')
 
     for epoch in range(args.epochs):
-        train_loss = train_one_epoch(args, train_loader, model, optimizer)
+        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack((preds)).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
