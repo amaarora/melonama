@@ -101,7 +101,7 @@ python train.py --model_name se_resnext_50 \
 
 ## 17 Jun, 2019 
 ```
-python ../src/train.py --model_name se_resnext_50     \
+python train.py --model_name se_resnext_50     \
 --device cuda     \
 --training_folds_csv \
 '/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
@@ -112,6 +112,6 @@ python ../src/train.py --model_name se_resnext_50     \
 --valid_batch_size 32     \
 --learning_rate 1e-4     \
 --epochs 50 \
---accumulation_steps 2
+--accumulation_steps 2 \
 --sz 224
 ```
