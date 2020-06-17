@@ -108,7 +108,7 @@ def main():
     parser.add_argument('--learning_rate', default=1e-3, type=float, help="Learning rate.")
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
-    parser.add_argument('--sz', default=224, type=int, help="Gradient accumulation steps.")
+    parser.add_argument('--sz', default=224, type=int, help="Size of input images.")
 
     args = parser.parse_args()
     
@@ -135,12 +135,12 @@ def main():
     
     train_aug = albumentations.Compose([
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
-        albumentations.RandomResizedCrop(args.sz, args.sz),
+        # albumentations.RandomResizedCrop(args.sz, args.sz),
         albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=360),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
-        albumentations.CenterCrop(args.sz, args.sz),
+        # albumentations.CenterCrop(args.sz, args.sz),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
     ])
     
