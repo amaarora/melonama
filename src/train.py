@@ -165,15 +165,15 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=3, threshold=0.001, mode='max'
+        optimizer, patience=3, threshold=0.001, mode='max', verbose=True
     )
 
-    es = EarlyStopping(patience=5, mode='max')
+    es = EarlyStopping(patience=8, mode='max')
 
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
-        predictions = np.vstack(preds).max(1).ravel()
+        predictions = np.vstack(preds).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)

@@ -19,7 +19,7 @@ class SeResnext50_32x4D(nn.Module):
         # add weighted BCE loss due to class imbalance
         if weights is not None:
             weights_ = weights[targets.data.view(-1).long()].view_as(targets)
-            loss_func = nn.BCEWithLogitsLoss(reduction=None)
+            loss_func = nn.BCEWithLogitsLoss(reduction='none')
             loss = loss_func(out, targets.view(-1,1).type_as(out))
             loss_class_weighted = loss * weights_
             loss = loss_class_weighted.mean()
