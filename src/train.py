@@ -173,7 +173,7 @@ def main():
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
-        predictions = np.vstack((preds)).ravel()
+        predictions = np.vstack(preds).max(1).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)

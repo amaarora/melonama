@@ -9,7 +9,7 @@ class SeResnext50_32x4D(nn.Module):
         self.base_model = pretrainedmodels.__dict__['se_resnext50_32x4d'](pretrained=pretrained)
         self.out   = nn.Linear(2048, 2)
 
-    def forward(self, images, targets, weights):
+    def forward(self, images, targets, weights=None):
         bs, _, _, _ = images.shape
         out = self.base_model.features(images)
         out = F.adaptive_avg_pool2d(out, 1)
