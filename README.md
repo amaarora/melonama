@@ -128,19 +128,35 @@ python train.py --model_name se_resnext_50     \
 - Since the model is not performing well for images resized with Reflection padding it is time to think of something different. 
 - I do not intend to retrain the model on squished images, so created a new dataset that is resized by mantaining Aspect Ratio and shorter side has length 300px.
 - Can try to add `GroupKFold` in a future iteration.
-- But for today, let's try the new dataset with `RandomResizeCrop` and `CenterCrop`.
+
+- The new baseline when I tried to replicate results using the training command shown below, and the logs are stored in 18 Jun 2020 part-2 notebook is auc 0.90 on the public test leaderboard.
 ```
 python train.py --model_name se_resnext_50     \
 --device cuda     \
 --training_folds_csv \
 '/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
---train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_pad_224'     \
---kfold 0     \
+--train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train224/'     \
+--kfold 1     \
 --pretrained imagenet     \
 --train_batch_size 64     \
 --valid_batch_size 32     \
 --learning_rate 1e-4     \
---epochs 50 \
---accumulation_steps 2 \
---sz 224
+--epochs 100 
+```
+
+- Next currently, the model is training for (292,292) image size by randomly resizing (300px, X) sized images on train and using CenterCrop on the validation set. Also, we need to use gradient accumulation of 2. The only difference is this between above and current training. 
+```
+python train.py --model_name se_resnext_50     \
+--device cuda     \
+--training_folds_csv \
+'/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
+--train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_300px_ar/'     \
+--kfold 2     \
+--pretrained imagenet     \
+--train_batch_size 32     \
+--valid_batch_size 32     \
+--learning_rate 1e-4     \
+--epochs 100 \
+--sz 292 \
+--accumulation_steps 2
 ```

@@ -135,7 +135,7 @@ def main():
     train_aug = albumentations.Compose([
         albumentations.Normalize(always_apply=True),
         albumentations.RandomResizedCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
-        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=360),
+        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
@@ -167,7 +167,7 @@ def main():
         optimizer, patience=3, threshold=0.001, mode='max', verbose=True
     )
 
-    es = EarlyStopping(patience=8, mode='max')
+    es = EarlyStopping(patience=4, mode='max')
 
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.weighted_loss else class_weights)
