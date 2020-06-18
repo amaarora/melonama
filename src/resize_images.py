@@ -62,5 +62,6 @@ if __name__ == '__main__':
         Parallel(n_jobs=16)(
             delayed(pad_and_resize)(i, args.output_folder, (224, 224)) for i in tqdm(images))
     else:
+        print("Resizing images to mantain aspect ratio in a way that the shorter side is 300px.")
         Parallel(n_jobs=16)(
-            delayed(resize_and_mantain)(i, args.output_folder, (600, 600)) for i in tqdm(images))
+            delayed(resize_and_mantain)(i, args.output_folder, (300, 300)) for i in tqdm(images))
