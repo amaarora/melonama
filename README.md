@@ -84,8 +84,12 @@ python train.py --model_name se_resnext_50 \
 ```
 
 ## 16 Jun, 2019
+- Gradient accumulations is used in this for training the model
+- Spent the day trying to train the model on (512,512) images using `RandomResizeCrop` and `CenterCrop`. Original raw images were resized to mantain aspect ratio and shorter side to have 600px.
+- Model training took too long on a single V100 and did not end up submitting to Kaggle.
+
 ```
-!python ../src/train.py --model_name se_resnext_50     \
+python ../src/train.py --model_name se_resnext_50     \
 --device cuda     \
 --training_folds_csv \
 '/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
@@ -100,6 +104,31 @@ python train.py --model_name se_resnext_50 \
 ```
 
 ## 17 Jun, 2019 
+- Created a new dataset, resized images by first adding Reflection padding using Fastai and then resizing to (224,224)
+- Trained the model using the below commands, with gradient accumulations but the model does not perform well.
+- Also tried this new dataset without Gradient Accumulation, did not work
+- Also, read about **Temperature Scaling** which was interesting.
+```
+python train.py --model_name se_resnext_50     \
+--device cuda     \
+--training_folds_csv \
+'/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
+--train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_pad_224'     \
+--kfold 0     \
+--pretrained imagenet     \
+--train_batch_size 64     \
+--valid_batch_size 32     \
+--learning_rate 1e-4     \
+--epochs 50 \
+--accumulation_steps 2 \
+--sz 224
+```
+
+## 18 Jun, 2019 
+- Since the model is not performing well for images resized with Reflection padding it is time to think of something different. 
+- I do not intend to retrain the model on squished images, so created a new dataset that is resized by mantaining Aspect Ratio and shorter side has length 300px.
+- Can try to add `GroupKFold` in a future iteration.
+- But for today, let's try the new dataset with `RandomResizeCrop` and `CenterCrop`.
 ```
 python train.py --model_name se_resnext_50     \
 --device cuda     \

@@ -19,7 +19,7 @@ tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
 def train_one_epoch(args, train_loader, model, optimizer, weights):
-    weights = weights.to(args.device)
+    if weights: weights = weights.to(args.device)
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 
@@ -108,12 +108,15 @@ def main():
     parser.add_argument('--learning_rate', default=1e-3, type=float, help="Learning rate.")
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
-    parser.add_argument('--sz', default=224, type=int, help="Size of input images.")
+    parser.add_argument('--sz', default=None, type=int, help="Size of input images.")
+    parser.add_argument('--weighted_loss', default=False, action='store_true', help="Whether to have weighted loss or not.")
 
     args = parser.parse_args()
     
-    # convert sz to int
-    if args.sz: args.sz = int(args.sz)
+    # check if weighted loss, then convert args.sz to int
+    if args.sz: 
+        print(f"Images will be resized to {args.sz}")
+        args.sz = int(args.sz)
 
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
@@ -123,25 +126,21 @@ def main():
     # calculate weights for NN loss
     weights = len(df_train)/df_train.target.value_counts().values 
     class_weights = torch.FloatTensor(weights)
-    print(f"assigning weights {weights} to loss fn.")
+    if args.weighted_loss: print(f"assigning weights {weights} to loss fn.")
 
     # create model
     model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
     model = model.to(args.device)
-
-    # get augmentations
-    mean = (0.485, 0.456, 0.406)
-    std  = (0.229, 0.224, 0.225)
-    
+  
     train_aug = albumentations.Compose([
-        albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
-        # albumentations.RandomResizedCrop(args.sz, args.sz),
+        albumentations.Normalize(always_apply=True),
+        albumentations.RandomResizedCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=360),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([
-        # albumentations.CenterCrop(args.sz, args.sz),
-        albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
+        albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
+        albumentations.Normalize(always_apply=True),
     ])
     
     # get train and valid images & targets
@@ -171,7 +170,7 @@ def main():
     es = EarlyStopping(patience=8, mode='max')
 
     for epoch in range(args.epochs):
-        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=class_weights)
+        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.weighted_loss else class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack(preds).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
