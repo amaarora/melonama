@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import argparse
 from model_dispatcher import MODEL_DISPATCHER
-from dataset import MelonamaDataset
+from dataset import MelonamaDataset, MelonamaTTADataset
 import pandas as pd
 import albumentations
 from early_stopping import EarlyStopping
@@ -15,6 +15,8 @@ from sklearn import metrics
 from datetime import date, datetime
 import pytz
 import logging
+import torchvision
+from torchvision.transforms import FiveCrop, ToTensor, Lambda, Normalize
 
 logger = logging.getLogger(__name__)
 tz = pytz.timezone('Australia/Sydney')
@@ -31,8 +33,14 @@ def predict(args, test_loader, model):
             targets = data['target']
             images  = images.to(args.device)    
             targets = targets.to(args.device)                
-            predictions, _ = model(images=images, targets=targets)
-            predictions = predictions.cpu()
+            if not args.tta:
+                predictions, _ = model(images=images, targets=targets)
+                predictions = predictions.cpu()
+            else: 
+                bs, ncrops, c, h, w = images.shape
+                predictions, _ = model(images=images.view(-1, c, h, w), targets=targets.view(-1))
+                predictions = predictions.view(bs, ncrops, -1).mean(1) 
+                predictions = predictions.cpu()
             final_predictions.append(predictions)
     return final_predictions
 
@@ -66,6 +74,8 @@ def main():
     parser.add_argument('--test_batch_size', default=64, type=int, help="Test batch size.")
     parser.add_argument('--submission_file', default="/home/ubuntu/repos/kaggle/melonama/data/sample_submission.csv", type=str, help="Test batch size.")
     parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output", type=str, help="Test batch size.")
+    parser.add_argument('--tta', action='store_true', default=False, help="Test batch size.")
+    parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
     
     args = parser.parse_args()
 
@@ -79,9 +89,14 @@ def main():
     mean = (0.485, 0.456, 0.406)
     std  = (0.229, 0.224, 0.225)
     test_aug = albumentations.Compose([
-        # albumentations.CenterCrop(224, 224),
+        albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
+    ]) if not args.tta else torchvision.transforms.Compose([
+        FiveCrop(args.sz),
+        Lambda(lambda crops: torch.stack([ToTensor()(crop) for crop in crops])),
+        Lambda(lambda crops: torch.stack([Normalize(mean=mean, std=std)(crop) for crop in crops]))
     ])
+    print(f"tst augmentations: {test_aug}")
 
     # create test images and create dummy targets
     df_test = pd.read_csv("/home/ubuntu/repos/kaggle/melonama/data/test.csv")
@@ -91,7 +106,8 @@ def main():
     
     # create test dataset
     test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug)
-
+    if args.tta: test_dataset = MelonamaTTADataset(test_image_paths, test_aug)
+    print(f"test dataset: {test_dataset}")
     # create test dataloader
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, 
         shuffle=False, num_workers=4)

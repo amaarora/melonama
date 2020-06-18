@@ -19,7 +19,7 @@ tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
 def train_one_epoch(args, train_loader, model, optimizer, weights):
-    if weights: weights = weights.to(args.device)
+    if args.weighted_loss: weights = weights.to(args.device)
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 

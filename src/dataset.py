@@ -25,3 +25,19 @@ class MelonamaDataset:
             'image': torch.tensor(image, dtype=torch.float), 
             'target': torch.tensor(target, dtype=torch.long)
         }
+
+
+class MelonamaTTADataset:
+    """Only useful for TTA"""
+    def __init__(self, image_paths, augmentations=None):
+        self.image_paths = image_paths
+        self.augmentations = augmentations 
+        
+    def __len__(self): return len(self.image_paths)
+    
+    def __getitem__(self, idx):
+        targets = torch.zeros(5)
+        image_path = self.image_paths[idx]
+        image = Image.open(image_path)
+        images = self.augmentations(image)
+        return {'image':images, 'target':targets}

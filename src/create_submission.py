@@ -8,4 +8,4 @@ if __name__ == '__main__':
     predictions = [np.load(path) for path in np_array_paths]
     predictions = sum(predictions) / len(predictions)
     sub['target'] = predictions
-    sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
+    sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission_tta.csv", index=False)

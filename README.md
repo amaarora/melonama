@@ -144,7 +144,7 @@ python train.py --model_name se_resnext_50     \
 --epochs 100 
 ```
 
-- Next currently, the model is training for (292,292) image size by randomly resizing (300px, X) sized images on train and using CenterCrop on the validation set. Also, we need to use gradient accumulation of 2. The only difference is this between above and current training. 
+- Next currently, the model is training for (292,292) image size by randomly resizing (300px, X) sized images on train and using CenterCrop on the validation set. Also, we need to use gradient accumulation of 2. We get a public leaderboard score of 0.901.
 ```
 python train.py --model_name se_resnext_50     \
 --device cuda     \
@@ -159,4 +159,24 @@ python train.py --model_name se_resnext_50     \
 --epochs 100 \
 --sz 292 \
 --accumulation_steps 2
+```
+
+- I have also added TTA, everything else same as above, but this did not improve the public leaderboard score and got a score of 0.897.
+
+- Now, model is training for weighted BCE with everything same as above.
+```
+python train.py --model_name se_resnext_50     \
+--device cuda     \
+--training_folds_csv \
+'/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv'     \
+--train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_300px_ar/'     \
+--kfold 0     \
+--pretrained imagenet     \
+--train_batch_size 32     \
+--valid_batch_size 32     \
+--learning_rate 1e-4     \
+--epochs 100 \
+--sz 292 \
+--accumulation_steps 2 \
+--weighted_loss
 ```
