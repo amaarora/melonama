@@ -47,8 +47,8 @@ class EarlyStopping:
         os.makedirs(parent, exist_ok=True)
         if epoch_score not in [-np.inf, np.inf, -np.nan, np.nan]:
             print(
-                "Validation score improved ({} --> {}). Saving model!".format(
-                    self.val_score, epoch_score
+                "Validation score improved ({} --> {}). Model saved at at {}!".format(
+                    self.val_score, epoch_score, model_path
                 )
             )
             torch.save(model.state_dict(), model_path)

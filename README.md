@@ -172,11 +172,11 @@ python train.py --model_name se_resnext_50     \
 --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_300px_ar/'     \
 --kfold 0     \
 --pretrained imagenet     \
---train_batch_size 32     \
+--train_batch_size 64     \
 --valid_batch_size 32     \
---learning_rate 1e-4     \
+--learning_rate 1e-3     \
 --epochs 100 \
---sz 292 \
---accumulation_steps 2 \
+--sz 224 \
+--accumulation_steps 4 \
 --weighted_loss
 ```
