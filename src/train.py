@@ -57,7 +57,7 @@ def evaluate(args, valid_loader, model):
             targets = data['target']
             images  = images.to(args.device)
             targets = targets.to(args.device)
-            preds, loss = model(images=images, targets=targets)
+            preds, loss = model(images=images, targets=targets, args=args)
             losses.update(loss.item(), valid_loader.batch_size)
             preds = preds.cpu()
             final_preds.append(preds)
@@ -202,7 +202,7 @@ def main():
         scheduler.step(valid_loss)
         es(
             valid_loss, model, 
-            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{syd_now.strftime(r'%H%M%S')}.bin"
+            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{auc}.bin"
         )
         if es.early_stop:
             print("Early stopping!")
