@@ -4,6 +4,19 @@ from torch.nn import functional as F
 import torch
 from efficientnet_pytorch import EfficientNet
 
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        
+    def forward(self, inputs, targets):
+        BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+        return F_loss.mean()
+
+
 class SeResnext50_32x4D(nn.Module):
     def __init__(self, pretrained):
         super(SeResnext50_32x4D, self).__init__()
@@ -55,6 +68,8 @@ class ClassificationHeadB3(nn.Module):
         x = self.dropout2(x)
         return self.l2(x)    
 
+
+loss_fn = FocalLoss(0.25, 2)
 
 class EfficientNetBx(nn.Module):
     def __init__(self, pretrained, arch_name='efficientnet-b3'):
