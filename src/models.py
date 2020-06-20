@@ -70,7 +70,7 @@ class ClassificationHeadB0(nn.Module):
         return self.l2(x)    
 
 class EfficientNetBx(nn.Module):
-    def __init__(self, pretrained, arch_name='efficientnet-b3'):
+    def __init__(self, pretrained, arch_name='efficientnet-b0'):
         super(EfficientNetBx, self).__init__()
         self.pretrained = pretrained
         self.base_model = EfficientNet.from_pretrained(arch_name) if pretrained else EfficientNet.from_name(arch_name)
