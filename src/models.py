@@ -24,23 +24,25 @@ class SeResnext50_32x4D(nn.Module):
         self.base_model = pretrainedmodels.__dict__['se_resnext50_32x4d'](pretrained=pretrained)
         self.out   = nn.Linear(2048, 1)
 
-    def forward(self, images, targets, weights=None):
+    def forward(self, images, targets, weights=None, args=None):
         bs, _, _, _ = images.shape
         out = self.base_model.features(images)
         out = F.adaptive_avg_pool2d(out, 1)
         out = out.reshape(bs, -1)
         out = self.out(out)
 
-        # add weighted BCE loss due to class imbalance
-        if weights is not None:
+        # Choose loss function based on args
+        if not args.focal_loss and weights is not None:
             weights_ = weights[targets.data.view(-1).long()].view_as(targets)
             loss_func = nn.BCEWithLogitsLoss(reduction='none')
             loss = loss_func(out, targets.view(-1,1).type_as(out))
             loss_class_weighted = loss * weights_
             loss = loss_class_weighted.mean()
-        else:
+        elif not args.focal_loss:
             loss = nn.BCEWithLogitsLoss()(out, targets.view(-1,1).type_as(out))
-        
+        elif args.focal_loss:
+            loss = loss_fn(out, targets.view(-1,1).type_as(out))
+
         return out, loss
 
 
@@ -69,6 +71,7 @@ class ClassificationHeadB0(nn.Module):
         x = self.dropout2(x)
         return self.l2(x)    
 
+
 class EfficientNetBx(nn.Module):
     def __init__(self, pretrained, arch_name='efficientnet-b0'):
         super(EfficientNetBx, self).__init__()
@@ -76,7 +79,7 @@ class EfficientNetBx(nn.Module):
         self.base_model = EfficientNet.from_pretrained(arch_name) if pretrained else EfficientNet.from_name(arch_name)
         self.head = ClassificationHeadB0(1)
 
-    def forward(self, images, targets, weights=None):
+    def forward(self, images, targets, weights=None, args=None):
         out = self.base_model.extract_features(images)  
         out = self.head(out)
         loss = nn.BCEWithLogitsLoss()(out, targets.view(-1,1).type_as(out))

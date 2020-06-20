@@ -34,7 +34,7 @@ def train_one_epoch(args, train_loader, model, optimizer, weights):
         targets = targets.to(args.device)
         if args.accumulation_steps == 1 and b_idx == 0:
             optimizer.zero_grad()
-        _, loss = model(images=images, targets=targets, weights=weights)
+        _, loss = model(images=images, targets=targets, weights=weights, args=args)
 
         with torch.set_grad_enabled(True):
             loss.backward()
@@ -106,16 +106,18 @@ def main():
     parser.add_argument('--pretrained', default=None, type=str, help="Set to 'imagenet' to load pretrained weights.")
     parser.add_argument('--train_batch_size', default=64, type=int, help="Training batch size.")
     parser.add_argument('--valid_batch_size', default=32, type=int, help="Validation batch size.")
-    parser.add_argument('--learning_rate', default=1e-3, type=float, help="Learning rate.")
+    parser.add_argument('--learning_rate', default=1e-4, type=float, help="Learning rate.")
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
-    parser.add_argument('--sz', default=None, type=int, help="Size of input images.")
+    parser.add_argument('--sz', default=None, type=int, help="The size to which RandomCrop and CenterCrop images.")
     parser.add_argument('--weighted_loss', default=False, action='store_true', help="Whether to have weighted loss or not.")
+    parser.add_argument('--focal_loss', default=False, action='store_true', help="Whether to use focal loss or not.")
     parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
+    parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
 
     args = parser.parse_args()
     
-    # check if weighted loss, then convert args.sz to int
+    # if args.sz, then print message and convert to int
     if args.sz: 
         print(f"Images will be resized to {args.sz}")
         args.sz = int(args.sz)
@@ -127,11 +129,15 @@ def main():
         df_external = pd.read_csv(args.external_csv_path)
     df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
     df_valid = df.query(f"kfold == {args.kfold}").reset_index(drop=True)
+    print(f"For kfold {args.kfold}; train_df: {df_train.shape}, valid_df: {df_valid.shape}")
 
     # calculate weights for NN loss
     weights = len(df_train)/df_train.target.value_counts().values 
     class_weights = torch.FloatTensor(weights)
-    if args.weighted_loss: print(f"assigning weights {weights} to loss fn.")
+    if args.weighted_loss: 
+        print(f"assigning weights {weights} to loss fn.")
+    if args.focal_loss: 
+        print("Focal loss will be used for training.")
 
     # create model
     model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
@@ -153,6 +159,8 @@ def main():
         albumentations.Normalize(always_apply=True),
     ])
 
+    print(f"Using train augmentations: {train_aug}")
+
     # get train and valid images & targets and add external data if required
     train_images = df_train.image_name.tolist()
     if args.external_csv_path:
@@ -167,9 +175,9 @@ def main():
     valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
 
-    # create train and valid dataset
-    train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug)
-    valid_dataset = MelonamaDataset(valid_image_paths, valid_targets, valid_aug)
+    # create train and valid dataset, dont use color constancy as already preprocessed in directory
+    train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc)
+    valid_dataset = MelonamaDataset(valid_image_paths, valid_targets, valid_aug, cc=args.cc)
 
     # create dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True, num_workers=4)
@@ -178,7 +186,7 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=3, threshold=0.001, mode='min', verbose=True
+        optimizer, patience=2, threshold=3e-4, mode='min', verbose=True
     )
 
     es = EarlyStopping(patience=6, mode='min')
