@@ -16,6 +16,7 @@ class FocalLoss(nn.Module):
         F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
         return F_loss.mean()
 
+loss_fn = FocalLoss(0.75, 2)
 
 class SeResnext50_32x4D(nn.Module):
     def __init__(self, pretrained):
@@ -67,9 +68,6 @@ class ClassificationHeadB3(nn.Module):
         x = self.bn2(x)
         x = self.dropout2(x)
         return self.l2(x)    
-
-
-loss_fn = FocalLoss(0.25, 2)
 
 class EfficientNetBx(nn.Module):
     def __init__(self, pretrained, arch_name='efficientnet-b3'):

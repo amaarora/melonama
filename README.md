@@ -4,28 +4,19 @@ To resize images simply run:
 ```
 mkdir data/train224
 mkdir data/test224
-python resize_images.py --input_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train --output_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train224ar --mantain_aspect_ratio True
+python resize_images.py --input_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train --output_folder /home/ubuntu/repos/kaggle/melonama/data/jpeg/train_512/ --mantain_aspect_ratio --sz 600 
 ```
 
 To train the model 
 ```
-python train.py --model_name se_resnext_50 \
-    --device cuda \
-    --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/train_folds.csv' \
-    --data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg' \
-    --kfold 0 \
-    --pretrained imagenet \
-    --train_batch_size 16 \
-    --valid_batch_size 32 \
-    --learning_rate 1e-4 \
-    --epochs 50 
+python train.py --model_name se_resnext_50     --device cuda     --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv' --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_256/' --kfold 0     --pretrained imagenet     --train_batch_size 64     --valid_batch_size 32     --learning_rate 4e-4     --epochs 100 --sz 224 --accumulation_steps 2 --external_csv_path /home/ubuntu/repos/kaggle/melonama/data/external/isic2019/external_melonama.csv 
 ```
 
 To run predictions: (do this for every model to create a `np` array for each model passed through `model_path`)
 ```
 python predict.py --model_name se_resnext_50 \
     --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0.bin \
-    --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 \
+    --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 --sz 292 --tta
 ```
 The predictions are by default created at the path `/home/ubuntu/repos/kaggle/melonama/data/output` and overwrite the past ones. 
 
@@ -179,4 +170,20 @@ python train.py --model_name se_resnext_50     \
 --sz 224 \
 --accumulation_steps 4 \
 --weighted_loss
+```
+
+## 20 Jun, 2019
+- External data training is added (only melonama images from ISIC 2019 have been added to help with imbalance)
+- AUC score stuck at 0.90 (this is the best I can do so far)
+- I think I waste the whole day trying to train models, and just not enough on how can I actually increase scores. There is a new idea to ensemble models with different sizes to get higher LB score. 
+- Added a `/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv` csv file which splits the train and validation data based on `patient_id` as well and makes sure there is no overlap. 
+- Script for `folds.py` has also been updated to include the new code. Usage instructions are included in the `stratified_group_k_fold` function.
+- Added a new data folder `/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_512/` which contains train images that have been resized to 600 x 600 and should be used for training models with image size 512x512 random and center crop.
+- Read about AUC to get a better understanding of what it is. 
+- Added and tried using focal loss. 
+- Also new validation csv is spit out as well that contains validation targets and predictions for analysis.
+- Perhaps more effort needs to be put into rewriting code and updating the model.
+
+```
+python train.py --model_name se_resnext_50     --device cuda     --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv' --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_256/' --kfold 0     --pretrained imagenet     --train_batch_size 64     --valid_batch_size 32     --learning_rate 4e-4     --epochs 100 --sz 224 --accumulation_steps 2 --external_csv_path /home/ubuntu/repos/kaggle/melonama/data/external/isic2019/external_melonama.csv
 ```
