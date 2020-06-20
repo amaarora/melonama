@@ -192,3 +192,4 @@ python train.py --model_name se_resnext_50     --device cuda     --training_fold
 - Add shades of gray color constancy algorithm from [here](https://github.com/nickshawn/Shades_of_Gray-color_constancy_transformation/blob/master/color_constancy.py).
 - Update dataset and add color_constancy as preprocessing step
 - Update augmentation to remove replace `RandomResizeCrop` with `RandomCrop`. This is from 2019 winner solution. 
+- Update data augmentation and use `valid_loss` for scheduler step and early stopping.

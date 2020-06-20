@@ -138,10 +138,16 @@ def main():
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
-        albumentations.Normalize(always_apply=True),
+        albumentations.RandomScale(0.1),
+        albumentations.Rotate(15),
+        albumentations.RandomBrightnessContrast(0.1, 0.1),
+        albumentations.Flip(p=0.5),
+        albumentations.IAAAffine(shear=0.1),
         albumentations.RandomCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
-        albumentations.Flip(p=0.5)
+        albumentations.Cutout(1, 16, 16), 
+        albumentations.Normalize(always_apply=True),
     ])
+
     valid_aug = albumentations.Compose([
         albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.Normalize(always_apply=True),
@@ -172,10 +178,10 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=3, threshold=0.001, mode='max', verbose=True
+        optimizer, patience=3, threshold=0.001, mode='min', verbose=True
     )
 
-    es = EarlyStopping(patience=4, mode='max')
+    es = EarlyStopping(patience=6, mode='min')
 
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.weighted_loss else class_weights)
@@ -185,8 +191,11 @@ def main():
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
         preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_fold_{}.csv".format(args.kfold), index=False)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
-        scheduler.step(auc)
-        es(auc, model, model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}.bin")
+        scheduler.step(valid_loss)
+        es(
+            valid_loss, model, 
+            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{syd_now.strftime(r'%H%M%S')}.bin"
+        )
         if es.early_stop:
             print("Early stopping!")
             break
