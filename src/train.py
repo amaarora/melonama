@@ -13,6 +13,7 @@ import os
 from sklearn import metrics
 from datetime import date, datetime
 import pytz
+from pathlib import Path
 import torch.nn as nn
 
 tz = pytz.timezone('Australia/Sydney')
@@ -110,6 +111,7 @@ def main():
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
     parser.add_argument('--sz', default=None, type=int, help="Size of input images.")
     parser.add_argument('--weighted_loss', default=False, action='store_true', help="Whether to have weighted loss or not.")
+    parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
 
     args = parser.parse_args()
     
@@ -120,6 +122,9 @@ def main():
 
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
+    if args.external_csv_path: 
+        print("External data at {} will be added to all training folds.".format(Path(args.external_csv_path).parent))
+        df_external = pd.read_csv(args.external_csv_path)
     df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
     df_valid = df.query(f"kfold == {args.kfold}").reset_index(drop=True)
 
@@ -142,12 +147,16 @@ def main():
         albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.Normalize(always_apply=True),
     ])
-    
-    # get train and valid images & targets
-    #TODO: Add image paths as args
+
+    # get train and valid images & targets and add external data if required
     train_images = df_train.image_name.tolist()
+    if args.external_csv_path:
+        external_images = df_external.image.tolist()
+        train_images = train_images+external_images
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
-    train_targets = df_train.target
+    train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
+
+    assert len(train_images) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
     valid_images = df_valid.image_name.tolist()
     valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
@@ -174,6 +183,8 @@ def main():
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack(preds).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
+        preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
+        preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_fold_{}.csv".format(args.kfold), index=False)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(auc)
         es(auc, model, model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}.bin")
