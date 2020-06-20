@@ -183,7 +183,7 @@ python train.py --model_name se_resnext_50     \
 - Added and tried using focal loss. 
 - Also new validation csv is spit out as well that contains validation targets and predictions for analysis.
 - Perhaps more effort needs to be put into rewriting code and updating the model.
-
+- Also, added `EfficientNet`
 ```
 python train.py --model_name se_resnext_50     --device cuda     --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv' --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_256/' --kfold 0     --pretrained imagenet     --train_batch_size 64     --valid_batch_size 32     --learning_rate 4e-4     --epochs 100 --sz 224 --accumulation_steps 2 --external_csv_path /home/ubuntu/repos/kaggle/melonama/data/external/isic2019/external_melonama.csv
 ```
