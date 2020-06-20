@@ -53,15 +53,22 @@ if __name__ == '__main__':
         required=True, 
         help="Output folder for images."
     )
-    parser.add_argument("--mantain_aspect_ratio", default=False, type=bool, help="Whether to mantain aspect ratio of images.")
+    parser.add_argument("--mantain_aspect_ratio", action='store_true', default=False, help="Whether to mantain aspect ratio of images.")
     parser.add_argument("--pad_resize", default=True, type=bool, help="Whether to pad and resize images.")
+    parser.add_argument("--sz", default=256, type=int, help="Whether to pad and resize images.")
 
     args = parser.parse_args()
+
+    if args.sz: 
+        print("Images will be resized to {}".format(args.sz))
+        args.sz= int(args.sz)
+
     images = glob.glob(os.path.join(args.input_folder, '*.jpg'))
     if (not args.mantain_aspect_ratio) and args.pad_resize:
+        print("Adding padding to images if needed and resizing images to square of side {}px.".format(args.sz))
         Parallel(n_jobs=16)(
-            delayed(pad_and_resize)(i, args.output_folder, (224, 224)) for i in tqdm(images))
+            delayed(pad_and_resize)(i, args.output_folder, (args.sz, args.sz)) for i in tqdm(images))
     else:
-        print("Resizing images to mantain aspect ratio in a way that the shorter side is 300px.")
-        Parallel(n_jobs=16)(
-            delayed(resize_and_mantain)(i, args.output_folder, (300, 300)) for i in tqdm(images))
+        print("Resizing images to mantain aspect ratio in a way that the shorter side is {}px but images are rectangular.".format(args.sz))
+        Parallel(n_jobs=32)(
+            delayed(resize_and_mantain)(i, args.output_folder, (args.sz, args.sz)) for i in tqdm(images))
