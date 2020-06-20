@@ -187,3 +187,8 @@ python train.py --model_name se_resnext_50     \
 ```
 python train.py --model_name se_resnext_50     --device cuda     --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv' --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_256/' --kfold 0     --pretrained imagenet     --train_batch_size 64     --valid_batch_size 32     --learning_rate 4e-4     --epochs 100 --sz 224 --accumulation_steps 2 --external_csv_path /home/ubuntu/repos/kaggle/melonama/data/external/isic2019/external_melonama.csv
 ```
+
+## 21 Jun, 2019 
+- Add shades of gray color constancy algorithm from [here](https://github.com/nickshawn/Shades_of_Gray-color_constancy_transformation/blob/master/color_constancy.py).
+- Update dataset and add color_constancy as preprocessing step
+- Update augmentation to remove replace `RandomResizeCrop` with `RandomCrop`. This is from 2019 winner solution. 

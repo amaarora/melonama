@@ -139,8 +139,7 @@ def main():
   
     train_aug = albumentations.Compose([
         albumentations.Normalize(always_apply=True),
-        albumentations.RandomResizedCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
-        albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15),
+        albumentations.RandomCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.Flip(p=0.5)
     ])
     valid_aug = albumentations.Compose([

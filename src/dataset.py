@@ -2,18 +2,22 @@ import torch
 from PIL import Image
 import albumentations
 import numpy as np
+from color_constancy import color_constancy
 
 class MelonamaDataset:
-    def __init__(self, image_paths, targets, augmentations=None):
+    def __init__(self, image_paths, targets, augmentations=None, cc=True):
         self.image_paths = image_paths
         self.targets = targets
         self.augmentations = augmentations
+        self.cc = cc
 
     def __len__(self): return len(self.image_paths)
 
     def __getitem__(self, idx):
         image_path = self.image_paths[idx]
         image = np.array(Image.open(image_path))
+        if self.cc: 
+            image = color_constancy(image)
         target = self.targets[idx]
         
         if self.augmentations is not None:
