@@ -1,5 +1,6 @@
 import models
 
 MODEL_DISPATCHER = {
-    'se_resnext_50': models.SeResnext50_32x4D
+    'se_resnext_50': models.SeResnext50_32x4D, 
+    'efficient_net': models.EfficientNetBx
 }
