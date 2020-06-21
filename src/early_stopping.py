@@ -40,7 +40,7 @@ class EarlyStopping:
             self.best_score = score
             self.save_checkpoint(epoch_score, model, model_path)
             self.counter = 0
-            preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_fold_{}.csv".format(model_path.split('/')[-1]), index=False)
+            preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_preds/valid_fold_{}.csv".format(model_path.split('/')[-1]), index=False)
 
     def save_checkpoint(self, epoch_score, model, model_path):
         model_path = Path(model_path)
