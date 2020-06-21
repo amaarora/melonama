@@ -159,7 +159,7 @@ def main():
         albumentations.Normalize(always_apply=True),
     ])
 
-    print(f"Using train augmentations: {train_aug}")
+    print(f"\nUsing train augmentations: {train_aug}\n")
 
     # get train and valid images & targets and add external data if required
     train_images = df_train.image_name.tolist()
