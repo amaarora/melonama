@@ -197,13 +197,15 @@ def main():
         predictions = np.vstack(preds).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
-        preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_fold_{}.csv".format(args.kfold), index=False)
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(valid_loss)
         es(
             valid_loss, model, 
-            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{auc}.bin"
-        )
+            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{auc}.bin",
+            preds_df=preds_df, 
+            args=args
+            )
+
         if es.early_stop:
             print("Early stopping!")
             break

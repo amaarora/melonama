@@ -18,7 +18,7 @@ class EarlyStopping:
         else:
             self.val_score = -np.Inf
 
-    def __call__(self, epoch_score, model, model_path):
+    def __call__(self, epoch_score, model, model_path, preds_df, args):
         if self.mode == "min":
             score = -1.0 * epoch_score
         else:
@@ -40,6 +40,7 @@ class EarlyStopping:
             self.best_score = score
             self.save_checkpoint(epoch_score, model, model_path)
             self.counter = 0
+            preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_fold_{}.csv".format(args.kfold), index=False)
 
     def save_checkpoint(self, epoch_score, model, model_path):
         model_path = Path(model_path)
