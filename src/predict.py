@@ -34,11 +34,11 @@ def predict(args, test_loader, model):
             images  = images.to(args.device)    
             targets = targets.to(args.device)                
             if not args.tta:
-                predictions, _ = model(images=images, targets=targets)
+                predictions, _ = model(images=images, targets=targets, args=args)
                 predictions = predictions.cpu()
             else: 
                 bs, ncrops, c, h, w = images.shape
-                predictions, _ = model(images=images.view(-1, c, h, w), targets=targets.view(-1))
+                predictions, _ = model(images=images.view(-1, c, h, w), targets=targets.view(-1), args=args)
                 predictions = predictions.view(bs, ncrops, -1).mean(1) 
                 predictions = predictions.cpu()
             final_predictions.append(predictions)
@@ -76,6 +76,7 @@ def main():
     parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output", type=str, help="Test batch size.")
     parser.add_argument('--tta', action='store_true', default=False, help="Test batch size.")
     parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
+    parser.add_argument('--focal_loss', default=False, help="Hack to make pred work.")
     
     args = parser.parse_args()
 
