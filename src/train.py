@@ -201,7 +201,7 @@ def main():
         scheduler.step(valid_loss)
         es(
             valid_loss, model, 
-            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/model_fold_{args.kfold}_{args.sz}_{auc}.bin",
+            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
             preds_df=preds_df, 
             args=args
             )
