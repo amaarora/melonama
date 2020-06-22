@@ -31,7 +31,7 @@ def resize_and_mantain(path, output_path, sz: tuple, args):
     # from research paper `https://isic-challenge-stade.s3.amazonaws.com/9e2e7c9c-480c-48dc-a452-c1dd577cc2b2/ISIC2019-paper-0816.pdf?AWSAccessKeyId=AKIA2FPBP3II4S6KTWEU&Signature=nQCPd%2F88z0rftMkXdxYG97Nau4Y%3D&Expires=1592222403`
     fn = os.path.basename(path)  
     img = Image.open(path)
-    size = min(600, sz[0])  
+    size = sz[0]  
     old_size = img.size
     ratio = float(size)/min(old_size)
     new_size = tuple([int(x * ratio) for x in old_size])
