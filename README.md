@@ -14,9 +14,7 @@ python train.py --model_name se_resnext_50     --device cuda     --training_fold
 
 To run predictions: (do this for every model to create a `np` array for each model passed through `model_path`)
 ```
-python predict.py --model_name se_resnext_50 \
-    --model_path /home/ubuntu/repos/kaggle/melonama/models/140620/model_fold_0.bin \
-    --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test224 --sz 292 --tta
+ python predict.py --model_name efficient_net --model_path /home/ubuntu/repos/kaggle/melonama/models/230620/efficient_net_fold_0_672_0.9261787601864147.bin --test_data_dir /home/ubuntu/repos/kaggle/melonama/data/jpeg/test_768_cc/ --sz 672 --tta --test_batch_size 16  
 ```
 The predictions are by default created at the path `/home/ubuntu/repos/kaggle/melonama/data/output` and overwrite the past ones. 
 
