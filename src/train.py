@@ -208,6 +208,7 @@ def main():
             valid_loss, model, 
             model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
             preds_df=preds_df, 
+            df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
             args=args
             )
 
