@@ -39,7 +39,7 @@ class EarlyStopping:
         else:
             self.best_score = score
             self.save_checkpoint(epoch_score, model, model_path)
-            self.save_df(epoch_score, model, model_path)
+            self.save_df(epoch_score, preds_df, df_path)
             self.counter = 0
 
     def save_checkpoint(self, epoch_score, model, model_path):
