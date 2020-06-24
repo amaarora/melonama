@@ -18,7 +18,7 @@ class EarlyStopping:
         else:
             self.val_score = -np.Inf
 
-    def __call__(self, epoch_score, model, model_path, preds_df, args):
+    def __call__(self, epoch_score, model, model_path, preds_df, df_path, args):
         if self.mode == "min":
             score = -1.0 * epoch_score
         else:
@@ -39,8 +39,8 @@ class EarlyStopping:
         else:
             self.best_score = score
             self.save_checkpoint(epoch_score, model, model_path)
+            self.save_df(epoch_score, model, model_path)
             self.counter = 0
-            preds_df.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/valid_preds/valid_fold_{}.csv".format(model_path.split('/')[-1]), index=False)
 
     def save_checkpoint(self, epoch_score, model, model_path):
         model_path = Path(model_path)
@@ -54,3 +54,14 @@ class EarlyStopping:
             )
             torch.save(model.state_dict(), model_path)
         self.val_score = epoch_score
+
+    def save_df(self, epoch_score, preds_df, df_path):
+        df_path = Path(df_path)
+        parent = df_path.parent
+        os.makedirs(parent, exist_ok=True)
+        preds_df.to_csv(df_path, index=False)
+        print(
+                "Validation score improved ({} --> {}). Validation predictions saved at at {}!".format(
+                    self.val_score, epoch_score, df_path
+                )
+        )
