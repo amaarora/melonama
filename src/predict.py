@@ -77,10 +77,14 @@ def main():
     parser.add_argument('--tta', action='store_true', default=False, help="Test batch size.")
     parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
     parser.add_argument('--focal_loss', default=False, help="Hack to make pred work.")
+    parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
     
     args = parser.parse_args()
 
-    model = MODEL_DISPATCHER[args.model_name](pretrained=None)
+    if 'efficient_net' in args.model_name:
+        model = MODEL_DISPATCHER[args.model_name](pretrained=False, arch_name=args.arch_name)
+    else:
+        model = MODEL_DISPATCHER[args.model_name](pretrained=False)
     
     # load weights
     model.load_state_dict(torch.load(args.model_path))
