@@ -114,6 +114,7 @@ def main():
     parser.add_argument('--focal_loss', default=False, action='store_true', help="Whether to use focal loss or not.")
     parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
+    parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
 
     args = parser.parse_args()
     
@@ -140,7 +141,11 @@ def main():
         print("Focal loss will be used for training.")
 
     # create model
-    model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
+    if 'efficient_net' in args.model_name:
+        model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name)
+    else:
+        model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
+    
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
