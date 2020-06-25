@@ -84,7 +84,7 @@ def main():
     if 'efficient_net' in args.model_name:
         model = MODEL_DISPATCHER[args.model_name](pretrained=False, arch_name=args.arch_name)
     else:
-        model = MODEL_DISPATCHER[args.model_name](pretrained=False)
+        model = MODEL_DISPATCHER[args.model_name](pretrained=None)
     
     # load weights
     model.load_state_dict(torch.load(args.model_path))
