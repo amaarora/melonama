@@ -20,7 +20,7 @@ tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
 def train_one_epoch(args, train_loader, model, optimizer, weights):
-    if args.weighted_loss: weights = weights.to(args.device)
+    if args.loss == 'weighted_bce': weights = weights.to(args.device)
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 
@@ -110,8 +110,7 @@ def main():
     parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
     parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
     parser.add_argument('--sz', default=None, type=int, help="The size to which RandomCrop and CenterCrop images.")
-    parser.add_argument('--weighted_loss', default=False, action='store_true', help="Whether to have weighted loss or not.")
-    parser.add_argument('--focal_loss', default=False, action='store_true', help="Whether to use focal loss or not.")
+    parser.add_argument('--loss', default='weighted_focal_loss', help="loss fn to train")
     parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
@@ -135,9 +134,9 @@ def main():
     # calculate weights for NN loss
     weights = len(df_train)/df_train.target.value_counts().values 
     class_weights = torch.FloatTensor(weights)
-    if args.weighted_loss: 
+    if args.loss == 'weighted_bce': 
         print(f"assigning weights {weights} to loss fn.")
-    if args.focal_loss: 
+    if args.loss == 'focal_loss': 
         print("Focal loss will be used for training.")
 
     # create model
@@ -197,7 +196,7 @@ def main():
     es = EarlyStopping(patience=6, mode='min')
 
     for epoch in range(args.epochs):
-        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.weighted_loss else class_weights)
+        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not (args.loss == 'weighted_bce') else class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack(preds).ravel()
         auc = metrics.roc_auc_score(valid_targets, predictions)

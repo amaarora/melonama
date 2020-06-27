@@ -32,7 +32,6 @@ class WeightedFocalLoss(nn.Module):
         F_loss = at*(1-pt)**self.gamma * BCE_loss
         return F_loss.mean()
 
-loss_fn = WeightedFocalLoss()
 
 class SeResnext50_32x4D(nn.Module):
     def __init__(self, pretrained):
@@ -48,17 +47,18 @@ class SeResnext50_32x4D(nn.Module):
         out = self.out(out)
 
         # Choose loss function based on args
-        if not args.focal_loss and weights is not None:
+        if not args.loss=='weighted_bce' and weights is not None:
             weights_ = weights[targets.data.view(-1).long()].view_as(targets)
             loss_func = nn.BCEWithLogitsLoss(reduction='none')
             loss = loss_func(out, targets.view(-1,1).type_as(out))
             loss_class_weighted = loss * weights_
             loss = loss_class_weighted.mean()
-        elif not args.focal_loss:
+        elif args.loss == 'bce':
             loss = nn.BCEWithLogitsLoss()(out, targets.view(-1,1).type_as(out))
-        elif args.focal_loss:
-            loss = loss_fn(out, targets.view(-1,1).type_as(out))
-
+        elif args.loss == 'weighted_focal_loss':
+            loss = WeightedFocalLoss()(out, targets.view(-1,1).type_as(out))
+        elif args.loss == 'focal_loss':
+            loss = FocalLoss()(out, targets.view(-1,1).type_as(out))
         return out, loss
 
 
@@ -72,18 +72,17 @@ class EfficientNetBx(nn.Module):
 
     def forward(self, images, targets, weights=None, args=None):
         out = self.base_model(images)  
-
-#         Choose loss function based on args
-        if not args.focal_loss and weights is not None:
+        if not args.loss=='weighted_bce' and weights is not None:
             weights_ = weights[targets.data.view(-1).long()].view_as(targets)
             loss_func = nn.BCEWithLogitsLoss(reduction='none')
             loss = loss_func(out, targets.view(-1,1).type_as(out))
             loss_class_weighted = loss * weights_
             loss = loss_class_weighted.mean()
-        elif not args.focal_loss:
+        elif args.loss == 'bce':
             loss = nn.BCEWithLogitsLoss()(out, targets.view(-1,1).type_as(out))
-        elif args.focal_loss:
-            loss = loss_fn(out, targets.view(-1,1).type_as(out))
-
+        elif args.loss == 'weighted_focal_loss':
+            loss = WeightedFocalLoss()(out, targets.view(-1,1).type_as(out))
+        elif args.loss == 'focal_loss':
+            loss = FocalLoss()(out, targets.view(-1,1).type_as(out))
         return out, loss
 
