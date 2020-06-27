@@ -1,0 +1,81 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AverageMeter	average_meter.py	/^class AverageMeter:$/;"	c
+EarlyStopping	early_stopping.py	/^class EarlyStopping:$/;"	c
+EfficientNetBx	models.py	/^class EfficientNetBx(nn.Module):$/;"	c
+FocalLoss	models.py	/^class FocalLoss(nn.Module):$/;"	c
+MODEL_DISPATCHER	model_dispatcher.py	/^MODEL_DISPATCHER = {$/;"	v
+MelonamaDataset	dataset.py	/^class MelonamaDataset:$/;"	c
+MelonamaTTADataset	dataset.py	/^class MelonamaTTADataset:$/;"	c
+SeResnext50_32x4D	models.py	/^class SeResnext50_32x4D(nn.Module):$/;"	c
+__call__	early_stopping.py	/^    def __call__(self, epoch_score, model, model_path, preds_df, df_path, args):$/;"	m	class:EarlyStopping	file:
+__getitem__	dataset.py	/^    def __getitem__(self, idx):$/;"	m	class:MelonamaDataset	file:
+__getitem__	dataset.py	/^    def __getitem__(self, idx):$/;"	m	class:MelonamaTTADataset	file:
+__init__	average_meter.py	/^    def __init__(self):$/;"	m	class:AverageMeter
+__init__	dataset.py	/^    def __init__(self, image_paths, augmentations=None):$/;"	m	class:MelonamaTTADataset
+__init__	dataset.py	/^    def __init__(self, image_paths, targets, augmentations=None, cc=True):$/;"	m	class:MelonamaDataset
+__init__	early_stopping.py	/^    def __init__(self, patience=7, mode="max", delta=0.0001):$/;"	m	class:EarlyStopping
+__init__	models.py	/^    def __init__(self, alpha=1, gamma=2):$/;"	m	class:FocalLoss
+__init__	models.py	/^    def __init__(self, pretrained):$/;"	m	class:SeResnext50_32x4D
+__init__	models.py	/^    def __init__(self, pretrained=True, arch_name='efficientnet-b0'):$/;"	m	class:EfficientNetBx
+__len__	dataset.py	/^    def __len__(self): return len(self.image_paths)$/;"	m	class:MelonamaDataset	file:
+__len__	dataset.py	/^    def __len__(self): return len(self.image_paths)$/;"	m	class:MelonamaTTADataset	file:
+args	resize_images.py	/^    args = parser.parse_args()$/;"	v
+average_meter.py	average_meter.py	1;"	F
+color_constancy	color_constancy.py	/^def color_constancy(img, power=6, gamma=None):$/;"	f
+color_constancy.py	color_constancy.py	1;"	F
+create_submission.py	create_submission.py	1;"	F
+dataset.py	dataset.py	1;"	F
+default	resize_images.py	/^        default=None, $/;"	v
+df	folds.py	/^    df = df.sample(frac=1).reset_index(drop=True)$/;"	v
+df	folds.py	/^    df = pd.read_csv(os.path.join(input_path, 'train.csv'))$/;"	v
+early_stopping.py	early_stopping.py	1;"	F
+eval_y_counts_per_fold	folds.py	/^    def eval_y_counts_per_fold(y_counts, fold):$/;"	f	function:stratified_group_k_fold
+evaluate	train.py	/^def evaluate(args, valid_loader, model):$/;"	f
+folds.py	folds.py	1;"	F
+forward	models.py	/^    def forward(self, images, targets, weights=None, args=None):$/;"	m	class:EfficientNetBx
+forward	models.py	/^    def forward(self, images, targets, weights=None, args=None):$/;"	m	class:SeResnext50_32x4D
+forward	models.py	/^    def forward(self, inputs, targets):$/;"	m	class:FocalLoss
+get_distribution	folds.py	/^def get_distribution(y_vals):$/;"	f
+help	resize_images.py	/^        help="Input folder where images exist."$/;"	v
+help	resize_images.py	/^        help="Output folder for images."$/;"	v
+images	resize_images.py	/^    images = glob.glob(os.path.join(args.input_folder, '*.jpg'))$/;"	v
+input_path	folds.py	/^    input_path = "\/home\/ubuntu\/repos\/kaggle\/melonama\/data\/"$/;"	v
+kf	folds.py	/^    kf = model_selection.StratifiedKFold(n_splits=5)$/;"	v
+logger	predict.py	/^logger = logging.getLogger(__name__)$/;"	v
+loss_fn	models.py	/^loss_fn = FocalLoss(0.75, 2)$/;"	v
+main	predict.py	/^def main():$/;"	f
+main	train.py	/^def main():$/;"	f
+model_dispatcher.py	model_dispatcher.py	1;"	F
+models.py	models.py	1;"	F
+np_array_paths	create_submission.py	/^    np_array_paths = [$/;"	v
+pad_and_resize	resize_images.py	/^def pad_and_resize(path, output_path, sz: tuple):$/;"	f
+parser	resize_images.py	/^    parser = argparse.ArgumentParser()$/;"	v
+predict	predict.py	/^def predict(args, test_loader, model):$/;"	f
+predict.py	predict.py	1;"	F
+predictions	create_submission.py	/^    predictions = [np.load(path) for path in np_array_paths]$/;"	v
+predictions	create_submission.py	/^    predictions = sum(predictions) \/ len(predictions)$/;"	v
+predictions	create_submission.py	/^    predictions = torch.sigmoid(predictions)$/;"	v
+predictions	create_submission.py	/^    predictions = torch.tensor(predictions)$/;"	v
+required	resize_images.py	/^        required=True, $/;"	v
+reset	average_meter.py	/^    def reset(self):$/;"	m	class:AverageMeter
+resize_and_mantain	resize_images.py	/^def resize_and_mantain(path, output_path, sz: tuple, args):$/;"	f
+resize_and_save	resize_images.py	/^def resize_and_save(path, output_path, sz: tuple):$/;"	f
+resize_images.py	resize_images.py	1;"	F
+save_checkpoint	early_stopping.py	/^    def save_checkpoint(self, epoch_score, model, model_path):$/;"	m	class:EarlyStopping
+save_df	early_stopping.py	/^    def save_df(self, epoch_score, preds_df, df_path):$/;"	m	class:EarlyStopping
+stratified_group_k_fold	folds.py	/^def stratified_group_k_fold(X, y, groups, k, seed=None):$/;"	f
+sub	create_submission.py	/^    sub = pd.read_csv('\/home\/ubuntu\/repos\/kaggle\/melonama\/data\/sample_submission.csv')$/;"	v
+syd_now	predict.py	/^syd_now = datetime.now(tz)$/;"	v
+syd_now	train.py	/^syd_now = datetime.now(tz)$/;"	v
+targets	folds.py	/^    targets = df.target.values$/;"	v
+train.py	train.py	1;"	F
+train_one_epoch	train.py	/^def train_one_epoch(args, train_loader, model, optimizer, weights):$/;"	f
+type	resize_images.py	/^        type=str, $/;"	v
+tz	predict.py	/^tz = pytz.timezone('Australia\/Sydney')$/;"	v
+tz	train.py	/^tz = pytz.timezone('Australia\/Sydney')$/;"	v
+update	average_meter.py	/^    def update(self, val, n=1):$/;"	m	class:AverageMeter
