@@ -31,7 +31,7 @@ def modify_model(model, args, nftrs=2):
             nn.ReLU(), 
             nn.Dropout(p=0.4))
         model.meta_after = nn.Sequential(
-            nn.Linear(1280 + 256, 1024),
+            nn.Linear(num_cnn_features + 256, 1024),
             nn.BatchNorm1d(1024), 
             nn.ReLU())
         model.base_model._fc = nn.Linear(1024, 1)
