@@ -201,9 +201,7 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=2, threshold=3e-4, 
-        mode='min' if args.metric=='valid_loss' else 'max', verbose=True
-    )
+        optimizer, patience=2, threshold=3e-4, mode='min')
 
     es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 
@@ -214,7 +212,7 @@ def main():
         auc = metrics.roc_auc_score(valid_targets, predictions)
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
-        scheduler.step(locals()[f"{args.metric}"])
+        scheduler.step(valid_loss)
         es(
             locals()[f"{args.metric}"], model, 
             model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
