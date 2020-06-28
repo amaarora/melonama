@@ -191,3 +191,11 @@ python train.py --model_name se_resnext_50     --device cuda     --training_fold
 - Update dataset and add color_constancy as preprocessing step
 - Update augmentation to remove replace `RandomResizeCrop` with `RandomCrop`. This is from 2019 winner solution. 
 - Update data augmentation and use `valid_loss` for scheduler step and early stopping.
+
+
+## 28 Jun, 2019
+Added support for metadata.
+
+```
+python train.py --model_name efficient_net     --arch_name efficientnet-b0 --device cuda     --training_folds_csv '/home/ubuntu/repos/kaggle/melonama/data/stratified_group_5_fold.csv' --train_data_dir '/home/ubuntu/repos/kaggle/melonama/data/jpeg/train_288_cc/'   --kfold 0 --pretrained imagenet     --train_batch_size 64 --valid_batch_size 32 --learning_rate  5e-4 --epochs 100 --sz 256 --accumulation_steps 2 --loss 'bce' --external_csv_path '/home/ubuntu/repos/kaggle/melonama/data/external/external_melonama_with_meta.csv' --use_metadata
+```
