@@ -17,6 +17,8 @@ from pathlib import Path
 import torch.nn as nn
 from utils import scale_and_map_df, modify_model
 from sklearn.metrics import roc_auc_score
+import random 
+
 
 tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
@@ -108,14 +110,17 @@ def run(fold, args):
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
-        albumentations.RandomScale(0.1),
-        albumentations.Rotate(15),
-        albumentations.RandomBrightnessContrast(0.1, 0.1),
+        albumentations.RandomScale(0.05),
+        albumentations.Rotate(50),
+        albumentations.RandomBrightnessContrast(0.15, 0.1),
         albumentations.Flip(p=0.5),
         albumentations.IAAAffine(shear=0.1),
         albumentations.RandomCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
-        albumentations.Cutout(1, 16, 16), 
-        albumentations.Normalize(always_apply=True),
+        albumentations.OneOf(
+            [albumentations.Cutout(random.randint(1,8), 16, 16),
+             albumentations.CoarseDropout(random.randint(1,8), 16, 16)]
+        ),
+        albumentations.Normalize(always_apply=True)
     ])
 
     valid_aug = albumentations.Compose([
