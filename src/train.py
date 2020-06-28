@@ -228,9 +228,9 @@ def main():
     if len(kfolds)>1:
         oof_df = pd.DataFrame()
         for fold in kfolds:
+            print(f'\n\n {"-"*50} \n\n')
             preds_df = run(fold, args)
             oof_df = pd.concat([oof_df, preds_df])
-        print(f'\n\n {"-"*50} \n\n')
     else: 
         oof_df = run(kfolds[0], args)
 
