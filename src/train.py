@@ -113,6 +113,7 @@ def main():
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
+    parser.add_argument('--tta', default=False, action='store_true')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
@@ -201,7 +202,7 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=2, threshold=3e-4, mode='min')
+        optimizer, patience=2, threshold=3e-4, mode='min', verbose=True)
 
     es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 
