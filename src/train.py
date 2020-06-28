@@ -52,11 +52,9 @@ def evaluate(args, valid_loader, model):
     with torch.no_grad():
         tk0 = tqdm(valid_loader, total=len(valid_loader))
         for data in tk0:
-            images  = data['image']
-            targets = data['target']
-            images  = images.to(args.device)
-            targets = targets.to(args.device)
-            preds, loss = model(images=images, targets=targets, args=args)
+            for key, value in data.items():
+                data[key] = value.to(args.device)
+            preds, loss = model(**data, args=args)
             losses.update(loss.item(), valid_loader.batch_size)
             preds = preds.cpu()
             final_preds.append(preds)
@@ -114,6 +112,7 @@ def main():
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
+    parser.add_argument('--metric', default='valid_loss', help="Metric to use for early stopping and scheduler.")
 
     args = parser.parse_args()
     
@@ -154,7 +153,9 @@ def main():
             df_external = scale_and_map_df(df_external, cols=['age_approx', 'sex'])
 
         meta_df = pd.concat(
-            (df_train[['age_approx', 'sex']], df_external[['age_approx', 'sex']]))
+            (
+                df_train[['age_approx', 'sex']], df_external[['age_approx', 'sex']])
+            ) if args.external_csv_path else df_train[['age_approx', 'sex']]
         meta_array = meta_df.values
     model = model.to(args.device)
   
@@ -201,10 +202,11 @@ def main():
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=2, threshold=3e-4, mode='min', verbose=True
+        optimizer, patience=2, threshold=3e-4, 
+        mode='min' if args.metric=='valid_loss' else 'max', verbose=True
     )
 
-    es = EarlyStopping(patience=6, mode='min')
+    es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not (args.loss == 'weighted_bce') else class_weights)
@@ -213,7 +215,7 @@ def main():
         auc = metrics.roc_auc_score(valid_targets, predictions)
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
-        scheduler.step(valid_loss)
+        scheduler.step(locals()[f"{args.metric}"])
         es(
             valid_loss, model, 
             model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
