@@ -15,6 +15,7 @@ from datetime import date, datetime
 import pytz
 from pathlib import Path
 import torch.nn as nn
+from utils import scale_and_map_df, modify_model
 
 tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
@@ -28,13 +29,11 @@ def train_one_epoch(args, train_loader, model, optimizer, weights):
         optimizer.zero_grad()
     tk0 = tqdm(train_loader, total=len(train_loader))
     for b_idx, data in enumerate(tk0):
-        images = data['image']
-        targets = data['target']
-        images = images.to(args.device)
-        targets = targets.to(args.device)
+        for key, value in data.items():
+            data[key] = value.to(args.device)
         if args.accumulation_steps == 1 and b_idx == 0:
             optimizer.zero_grad()
-        _, loss = model(images=images, targets=targets, weights=weights, args=args)
+        _, loss = model(**data, args=args)
 
         with torch.set_grad_enabled(True):
             loss.backward()
@@ -114,6 +113,7 @@ def main():
     parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
+    parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
 
     args = parser.parse_args()
     
@@ -144,7 +144,18 @@ def main():
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name)
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
-    
+
+    meta_array=None
+    if args.use_metadata:
+        df_train = scale_and_map_df(df_train, cols=['age_approx', 'sex'])
+        df_valid = scale_and_map_df(df_valid, cols=['age_approx', 'sex'])
+        model = modify_model(model, args)
+        if args.external_csv_path: 
+            df_external = scale_and_map_df(df_external, cols=['age_approx', 'sex'])
+
+        meta_df = pd.concat(
+            (df_train[['age_approx', 'sex']], df_external[['age_approx', 'sex']]))
+        meta_array = meta_df.values
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
@@ -180,8 +191,8 @@ def main():
     valid_targets = df_valid.target
 
     # create train and valid dataset, dont use color constancy as already preprocessed in directory
-    train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc)
-    valid_dataset = MelonamaDataset(valid_image_paths, valid_targets, valid_aug, cc=args.cc)
+    train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc, meta_array=meta_array)
+    valid_dataset = MelonamaDataset(valid_image_paths, valid_targets, valid_aug, cc=args.cc, meta_array=meta_array)
 
     # create dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True, num_workers=4)
