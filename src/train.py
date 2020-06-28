@@ -216,7 +216,7 @@ def main():
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
         scheduler.step(locals()[f"{args.metric}"])
         es(
-            valid_loss, model, 
+            locals()[f"{args.metric}"], model, 
             model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
             preds_df=preds_df, 
             df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
