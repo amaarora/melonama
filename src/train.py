@@ -21,10 +21,6 @@ tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
 
-# init empty Out Of Fold dataframe
-OOF_df = pd.DataFrame()
-
-
 def train_one_epoch(args, train_loader, model, optimizer, weights):
     if args.loss == 'weighted_bce': weights = weights.to(args.device)
     losses = AverageMeter()
@@ -173,10 +169,7 @@ def run(fold, args):
             args=args
             )
         if es.early_stop:
-            print("Early stopping!")
-            preds_df['fold'] = fold
-            OOF_df = pd.concat([OOF_df, preds_df])
-            break
+            return preds_df
 
 
 def main():
@@ -233,12 +226,18 @@ def main():
     # if args.sz, then print message and convert to int
     kfolds = list(map(int, args.kfold.split(',')))
     if len(kfolds)>1:
+        oof_df = pd.DataFrame()
         for fold in kfolds:
-            run(fold, args)
+            preds_df = run(fold, args)
+            oof_df = pd.concat([oof_df, preds_df])
         print(f'\n\n {"-"*50} \n\n')
     else: 
-        run(kfolds[0], args)
+        oof_df = run(kfolds[0], args)
 
+    oof_df.to_csv(f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv", index=False)
+    print(f"oof_df saved to /home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv")
+
+    print(f'\n\n OOF AUC: {roc_auc_score(oof_df.targets, oof_df.predictions)}')
 
 if __name__=='__main__':
     main()
