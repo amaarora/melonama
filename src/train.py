@@ -16,6 +16,7 @@ import pytz
 from pathlib import Path
 import torch.nn as nn
 from utils import scale_and_map_df, modify_model
+from sklearn.metrics import roc_auc_score
 
 tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
