@@ -20,6 +20,11 @@ from utils import scale_and_map_df, modify_model
 tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
+
+# init empty Out Of Fold dataframe
+OOF_df = pd.DataFrame()
+
+
 def train_one_epoch(args, train_loader, model, optimizer, weights):
     if args.loss == 'weighted_bce': weights = weights.to(args.device)
     losses = AverageMeter()
@@ -60,63 +65,9 @@ def evaluate(args, valid_loader, model):
             final_preds.append(preds)
             tk0.set_postfix(loss=losses.avg)
     return final_preds, losses.avg
-        
 
-def main():
-    parser = argparse.ArgumentParser()
 
-    #TODO: Add paramaeters as arguments
-    # Required paramaters
-    parser.add_argument(
-        "--device", 
-        default=None, 
-        type=str, 
-        required=True, 
-        help="device on which to run the training"
-    )
-    parser.add_argument(
-        '--training_folds_csv', 
-        default=None, 
-        type=str, 
-        required=True, 
-        help="training file with Kfolds"
-    )
-    parser.add_argument(
-        '--model_name', 
-        default='se_resnext_50',
-        type=str, 
-        required=True, 
-        help="Name selected in the list: " + f"{','.join(MODEL_DISPATCHER.keys())}"
-    )
-    parser.add_argument(
-        '--train_data_dir', 
-        required=True, 
-        help="Path to train data files."
-    )
-    parser.add_argument(
-        '--kfold', 
-        required=True,
-        type=int,  
-        help="Fold for which to run training and validation."
-    )
-    #Other parameters
-    parser.add_argument('--metric', default='auc', help="Metric to use for early stopping and scheduler.")
-    parser.add_argument('--pretrained', default=None, type=str, help="Set to 'imagenet' to load pretrained weights.")
-    parser.add_argument('--train_batch_size', default=64, type=int, help="Training batch size.")
-    parser.add_argument('--valid_batch_size', default=32, type=int, help="Validation batch size.")
-    parser.add_argument('--learning_rate', default=1e-4, type=float, help="Learning rate.")
-    parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
-    parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
-    parser.add_argument('--sz', default=None, type=int, help="The size to which RandomCrop and CenterCrop images.")
-    parser.add_argument('--loss', default='weighted_focal_loss', help="loss fn to train")
-    parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
-    parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
-    parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
-    parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
-    parser.add_argument('--tta', default=False, action='store_true')
-
-    args = parser.parse_args()
-    # if args.sz, then print message and convert to int
+def run(fold, args):
     if args.sz: 
         print(f"Images will be resized to {args.sz}")
         args.sz = int(args.sz)
@@ -126,9 +77,9 @@ def main():
     if args.external_csv_path: 
         print("External data at {} will be added to all training folds.".format(Path(args.external_csv_path).parent))
         df_external = pd.read_csv(args.external_csv_path)
-    df_train = df.query(f"kfold != {args.kfold}").reset_index(drop=True)
-    df_valid = df.query(f"kfold == {args.kfold}").reset_index(drop=True)
-    print(f"For kfold {args.kfold}; train_df: {df_train.shape}, valid_df: {df_valid.shape}")
+    df_train = df.query(f"kfold != {fold}").reset_index(drop=True)
+    df_valid = df.query(f"kfold == {fold}").reset_index(drop=True)
+    print(f"Running for K-Fold {fold}; train_df: {df_train.shape}, valid_df: {df_valid.shape}")
 
     # calculate weights for NN loss
     weights = len(df_train)/df_train.target.value_counts().values 
@@ -221,10 +172,72 @@ def main():
             df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_fold_{args.kfold}_{args.sz}_{auc}.bin",
             args=args
             )
-
         if es.early_stop:
             print("Early stopping!")
+            preds_df['fold'] = fold
+            OOF_df = pd.concat([OOF_df, preds_df])
             break
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    # Required paramaters
+    parser.add_argument(
+        "--device", 
+        default=None, 
+        type=str, 
+        required=True, 
+        help="device on which to run the training"
+    )
+    parser.add_argument(
+        '--training_folds_csv', 
+        default=None, 
+        type=str, 
+        required=True, 
+        help="training file with Kfolds"
+    )
+    parser.add_argument(
+        '--model_name', 
+        default='se_resnext_50',
+        type=str, 
+        required=True, 
+        help="Name selected in the list: " + f"{','.join(MODEL_DISPATCHER.keys())}"
+    )
+    parser.add_argument(
+        '--train_data_dir', 
+        required=True, 
+        help="Path to train data files."
+    )
+    parser.add_argument(
+        '--kfold', 
+        required=True,
+        help="Fold for which to run training and validation."
+    )
+    #Other parameters
+    parser.add_argument('--metric', default='auc', help="Metric to use for early stopping and scheduler.")
+    parser.add_argument('--pretrained', default=None, type=str, help="Set to 'imagenet' to load pretrained weights.")
+    parser.add_argument('--train_batch_size', default=64, type=int, help="Training batch size.")
+    parser.add_argument('--valid_batch_size', default=32, type=int, help="Validation batch size.")
+    parser.add_argument('--learning_rate', default=1e-4, type=float, help="Learning rate.")
+    parser.add_argument('--epochs', default=3, type=int, help="Num epochs.")
+    parser.add_argument('--accumulation_steps', default=1, type=int, help="Gradient accumulation steps.")
+    parser.add_argument('--sz', default=None, type=int, help="The size to which RandomCrop and CenterCrop images.")
+    parser.add_argument('--loss', default='weighted_focal_loss', help="loss fn to train")
+    parser.add_argument('--external_csv_path', default=False, type=str, help="External csv path with melonama image names.")
+    parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
+    parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
+    parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
+    parser.add_argument('--tta', default=False, action='store_true')
+
+    args = parser.parse_args()
+    # if args.sz, then print message and convert to int
+    kfolds = list(map(int, args.kfold.split(',')))
+    if len(kfolds)>1:
+        for fold in kfolds:
+            run(fold, args)
+        print(f'\n\n {"-"*50} \n\n')
+    else: 
+        run(kfolds[0], args)
 
 
 if __name__=='__main__':
