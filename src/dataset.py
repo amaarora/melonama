@@ -41,18 +41,28 @@ class MelonamaDataset:
 
 class MelonamaTTADataset:
     """Only useful for TTA"""
-    def __init__(self, image_paths, augmentations=None):
+    def __init__(self, image_paths, augmentations=None, meta_array=None):
         self.image_paths = image_paths
         self.augmentations = augmentations 
+        self.meta_array = meta_array
         
     def __len__(self): return len(self.image_paths)
     
     def __getitem__(self, idx):
-        targets = torch.zeros(5)
+        target = torch.zeros(5)
         image_path = self.image_paths[idx]
         image = Image.open(image_path)
-        images = self.augmentations(image)
-        return {'image':images, 'target':targets}
+        if self.meta_array is not None:
+            meta  = self.meta_array[idx]
+        image = self.augmentations(image)
+        return {
+            'image':image, 
+            'target':target
+            } if self.meta_array is None else {
+            'image': image, 
+            'target': target,
+            'meta': torch.tensor(meta, dtype=torch.float)
+        }
 
 
 class MelonamaMetaDataset:

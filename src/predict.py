@@ -17,6 +17,7 @@ import pytz
 import logging
 import torchvision
 from torchvision.transforms import FiveCrop, ToTensor, Lambda, Normalize
+from utils import scale_and_map_df, modify_model
 
 logger = logging.getLogger(__name__)
 tz = pytz.timezone('Australia/Sydney')
@@ -29,16 +30,15 @@ def predict(args, test_loader, model):
     with torch.no_grad():
         tk0 = tqdm(test_loader, total=len(test_loader))
         for data in tk0:
-            images  = data['image']
-            targets = data['target']
-            images  = images.to(args.device)    
-            targets = targets.to(args.device)                
+            for key, value in data.items():
+                data[key] = value.to(args.device)                
             if not args.tta:
-                predictions, _ = model(images=images, targets=targets, args=args)
+                predictions, _ = model(**data, args=args)
                 predictions = predictions.cpu()
             else: 
-                bs, ncrops, c, h, w = images.shape
-                predictions, _ = model(images=images.view(-1, c, h, w), targets=targets.view(-1), args=args)
+                bs, ncrops, c, h, w = data['image'].shape
+                predictions, _ = model(image=data['image'].view(-1, c, h, w), target=data['target'].view(-1), 
+                    args=args, meta=data['meta'])
                 predictions = predictions.view(bs, ncrops, -1).mean(1) 
                 predictions = predictions.cpu()
             final_predictions.append(predictions)
@@ -76,8 +76,9 @@ def main():
     parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output", type=str, help="Test batch size.")
     parser.add_argument('--tta', action='store_true', default=False, help="Test batch size.")
     parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
-    parser.add_argument('--focal_loss', default=False, help="Hack to make pred work.")
+    parser.add_argument('--loss', default='weighted_focal_loss', help="Loss fn to use")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
+    parser.add_argument('--use_metadata', default=True, action='store_true', help="Whether to use metadata")
     
     args = parser.parse_args()
 
@@ -85,7 +86,10 @@ def main():
         model = MODEL_DISPATCHER[args.model_name](pretrained=False, arch_name=args.arch_name)
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=None)
-    
+
+    if args.use_metadata:
+        model = modify_model(model, args)
+
     # load weights
     model.load_state_dict(torch.load(args.model_path))
     model = model.to(args.device)
@@ -108,11 +112,17 @@ def main():
     test_images = df_test.image_name.tolist()
     test_image_paths = [os.path.join(args.test_data_dir, image_name+'.jpg') for image_name in test_images]
     test_targets = np.zeros(len(test_image_paths))        
-    
+
+    meta_array=None
+    if args.use_metadata:
+        df_test = scale_and_map_df(df_test, cols=['age_approx', 'sex'])
+        meta_df = df_test[['age_approx', 'sex']]
+        meta_array = meta_df.values        
+
     # create test dataset
-    test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug)
-    if args.tta: test_dataset = MelonamaTTADataset(test_image_paths, test_aug)
-    print(f"test dataset: {test_dataset}")
+    test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug, meta_array=meta_array)
+    if args.tta: test_dataset = MelonamaTTADataset(test_image_paths, test_aug, meta_array=meta_array)
+    print(f"test dataset: {test_dataset.__class__.__name__}")
     # create test dataloader
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, 
         shuffle=False, num_workers=4)

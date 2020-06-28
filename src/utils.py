@@ -43,6 +43,10 @@ def modify_model(model, args, nftrs=2):
         if self.base_model._dropout:
             cnn_features = F.dropout(cnn_features, p=0.2, training=self.training)
         meta_features = self.meta_before(meta)
+
+        if not self.training:
+            meta_features = meta_features.repeat_interleave(5,0)
+
         features = torch.cat([cnn_features, meta_features], dim=1)
         features = self.meta_after(features)
         out = self.base_model._fc(features)
