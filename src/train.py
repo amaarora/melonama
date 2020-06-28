@@ -100,6 +100,7 @@ def main():
         help="Fold for which to run training and validation."
     )
     #Other parameters
+    parser.add_argument('--metric', default='auc', help="Metric to use for early stopping and scheduler.")
     parser.add_argument('--pretrained', default=None, type=str, help="Set to 'imagenet' to load pretrained weights.")
     parser.add_argument('--train_batch_size', default=64, type=int, help="Training batch size.")
     parser.add_argument('--valid_batch_size', default=32, type=int, help="Validation batch size.")
@@ -112,10 +113,8 @@ def main():
     parser.add_argument('--cc', default=False, action='store_true', help="Whether to use color constancy or not.")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
-    parser.add_argument('--metric', default='valid_loss', help="Metric to use for early stopping and scheduler.")
 
     args = parser.parse_args()
-    
     # if args.sz, then print message and convert to int
     if args.sz: 
         print(f"Images will be resized to {args.sz}")
