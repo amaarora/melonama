@@ -44,7 +44,7 @@ def modify_model(model, args, nftrs=9):
         meta_features = self.meta_before(meta)
 
         if not self.training and args.tta:
-            meta_features = meta_features.repeat_interleave(5,0)
+            meta_features = meta_features.repeat_interleave(args.num_crops,0)
 
         features = torch.cat([cnn_features, meta_features], dim=1)
         features = self.meta_after(features)

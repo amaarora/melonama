@@ -16,7 +16,7 @@ from datetime import date, datetime
 import pytz
 import logging
 import torchvision
-from torchvision.transforms import FiveCrop, ToTensor, Lambda, Normalize
+from torchvision.transforms import FiveCrop, ToTensor, Lambda, Normalize, TenCrop
 from utils import scale_and_map_df, modify_model
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,8 @@ def main():
     parser.add_argument('--loss', default='weighted_focal_loss', help="Loss fn to use")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
     parser.add_argument('--use_metadata', default=True, action='store_true', help="Whether to use metadata")
-    
+    parser.add_argument('--num_crops', default=10, type=int, help="number of crops to use during tta")
+
     args = parser.parse_args()
 
     if 'efficient_net' in args.model_name:
@@ -101,7 +102,7 @@ def main():
         albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
     ]) if not args.tta else torchvision.transforms.Compose([
-        FiveCrop(args.sz),
+        TenCrop(args.sz) if args.num_crops==10 else FiveCrop(args.sz),
         Lambda(lambda crops: torch.stack([ToTensor()(crop) for crop in crops])),
         Lambda(lambda crops: torch.stack([Normalize(mean=mean, std=std)(crop) for crop in crops]))
     ])
@@ -115,9 +116,14 @@ def main():
 
     meta_array=None
     if args.use_metadata:
-        df_test = scale_and_map_df(df_test, cols=['age_approx', 'sex'])
-        meta_df = df_test[['age_approx', 'sex']]
-        meta_array = meta_df.values        
+        # create meta array
+        sex_dummy_test = pd.get_dummies(df_test['sex'])[
+            ['male', 'female']]
+        site_dummy_test = pd.get_dummies(df_test['anatom_site_general_challenge'])[
+                ['head/neck', 'lower extremity', 'oral/genital', 'palms/soles', 'torso','upper extremity']]
+        assert max(df_test.age_approx)<100
+        age_test = df_test.age_approx.fillna(-5)/100
+        meta_array = pd.concat([sex_dummy_test, site_dummy_test, age_test], axis=1).values
 
     # create test dataset
     test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug, meta_array=meta_array)
