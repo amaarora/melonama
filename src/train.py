@@ -96,17 +96,31 @@ def run(fold, args):
 
     meta_array=None
     if args.use_metadata:
-        df_train = scale_and_map_df(df_train, cols=['age_approx', 'sex'])
-        df_valid = scale_and_map_df(df_valid, cols=['age_approx', 'sex'])
+        # create meta array
+        sex_dummy_train = pd.get_dummies(df_train['sex'])[
+            ['male', 'female']]
+        site_dummy_train = pd.get_dummies(df_train['anatom_site_general_challenge'])[
+                ['head/neck', 'lower extremity', 'oral/genital', 'palms/soles', 'torso','upper extremity']]
+        assert max(df_train.age_approx)<100
+        age_train = df_train.age_approx.fillna(-5)/100
+        meta_array = pd.concat([sex_dummy_train, site_dummy_train, age_train], axis=1).values
+        # modify model forward       
         model = modify_model(model, args)
+        
+        # add external meta to meta array
         if args.external_csv_path: 
-            df_external = scale_and_map_df(df_external, cols=['age_approx', 'sex'])
+            sex_dummy_ext = pd.get_dummies(df_external['sex'])[
+                ['male', 'female']]
+            df_external['anatom_site_general'] = df_external.anatom_site_general.replace(
+                {'anterior torso': 'torso', 'lateral torso': 'torso', 'posterior torso': 'torso'})
+            site_dummy_ext = pd.get_dummies(df_external['anatom_site_general'])[
+                ['head/neck', 'lower extremity', 'oral/genital', 'palms/soles', 'torso','upper extremity']]
+            assert max(df_external.age_approx)<100
+            age_ext = df_external.age_approx.fillna(-5)/100
+            meta_array = np.concatenate([meta_array, pd.concat([sex_dummy_ext, site_dummy_ext, age_ext], axis=1).values])   
+        
+        assert meta_array.shape[1]==9
 
-        meta_df = pd.concat(
-            (
-                df_train[['age_approx', 'sex']], df_external[['age_approx', 'sex']])
-            ) if args.external_csv_path else df_train[['age_approx', 'sex']]
-        meta_array = meta_df.values
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
@@ -130,7 +144,7 @@ def run(fold, args):
 
     print(f"\nUsing train augmentations: {train_aug}\n")
 
-    # get train and valid images & targets and add external data if required
+    # get train and valid images & targets and add external data if required (external data only contains melonama data)    
     train_images = df_train.image_name.tolist()
     if args.external_csv_path:
         external_images = df_external.image.tolist()
@@ -140,6 +154,7 @@ def run(fold, args):
 
     assert len(train_images) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
+    # same for valid dataframe
     valid_images = df_valid.image_name.tolist()
     valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target

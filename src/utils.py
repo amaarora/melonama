@@ -20,7 +20,7 @@ def scale_and_map_df(df, cols):
     return df
 
 
-def modify_model(model, args, nftrs=2):
+def modify_model(model, args, nftrs=9):
     if args.model_name == 'efficient_net':
         num_cnn_features = model.base_model._fc.in_features
         model.meta_before = nn.Sequential(
@@ -35,7 +35,6 @@ def modify_model(model, args, nftrs=2):
             nn.BatchNorm1d(1024), 
             nn.ReLU())
         model.base_model._fc = nn.Linear(1024, 1)
-        drop = model.base_model._dropout
     
     def new_forward(self, image, target, meta, weights=None, args=None):
         cnn_features = self.base_model.extract_features(image) 
