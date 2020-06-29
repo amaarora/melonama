@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch 
 import torch.nn.functional as F
-from models import FocalLoss, WeightedFocalLoss
+from models import WeightedFocalLoss
 import types
 
 def scale_and_map_df(df, cols):  
