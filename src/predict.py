@@ -85,8 +85,6 @@ def main():
 
     if 'efficient_net' in args.model_name:
         model = MODEL_DISPATCHER[args.model_name](pretrained=False, arch_name=args.arch_name)
-    else:
-        model = MODEL_DISPATCHER[args.model_name](pretrained=None)
 
     if args.use_metadata:
         model = modify_model(model, args)
@@ -106,7 +104,7 @@ def main():
         Lambda(lambda crops: torch.stack([ToTensor()(crop) for crop in crops])),
         Lambda(lambda crops: torch.stack([Normalize(mean=mean, std=std)(crop) for crop in crops]))
     ])
-    print(f"tst augmentations: {test_aug}")
+    print(f"\ntest augmentations: {test_aug}\n")
 
     # create test images and create dummy targets
     df_test = pd.read_csv("/home/ubuntu/repos/kaggle/melonama/data/test.csv")
@@ -125,13 +123,16 @@ def main():
         age_test = df_test.age_approx.fillna(-5)/100
         meta_array = pd.concat([sex_dummy_test, site_dummy_test, age_test], axis=1).values
 
-    # create test dataset
-    test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug, meta_array=meta_array)
-    if args.tta: test_dataset = MelonamaTTADataset(test_image_paths, test_aug, meta_array=meta_array)
+    # create test dataset based on tta or not
+    if args.tta: 
+        test_dataset = MelonamaTTADataset(test_image_paths, test_aug, meta_array=meta_array, nc=args.num_crops)
+    else:
+        test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug, meta_array=meta_array)
+    
     print(f"test dataset: {test_dataset.__class__.__name__}")
+    
     # create test dataloader
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, 
-        shuffle=False, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, shuffle=False, num_workers=4)
 
     predictions = predict(args, test_loader, model)
     predictions = np.vstack((predictions)).ravel()

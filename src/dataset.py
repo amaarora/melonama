@@ -18,20 +18,15 @@ class MelonamaDataset:
     def __getitem__(self, idx):
         image_path = self.image_paths[idx]
         image = np.array(Image.open(image_path))
-        if self.meta_array is not None:
-            meta  = self.meta_array[idx]
+        target = self.targets[idx]
+
+        # color constancy if not preprocessed          
         if self.cc: 
             image = color_constancy(image)
-        target = self.targets[idx]
         
-        # Augmentation
-        if self.augmentations is not None:
-            augmented = self.augmentations(image=image)
-            image = augmented['image']
-        image = np.transpose(image, (2, 0, 1)).astype(np.float32)
-        
+        # meta data and augmentations
         if self.meta_array is not None:
-            # meta augmentation
+            meta  = self.meta_array[idx]
             if torch.rand(1)<0.1:
                 meta[:2] = torch.zeros(2)      
             if torch.rand(1)<0.1:
@@ -39,6 +34,12 @@ class MelonamaDataset:
             if torch.rand(1)<0.1:
                 meta[8] = torch.tensor(-0.05)      
 
+        # Image augmentations
+        if self.augmentations is not None:
+            augmented = self.augmentations(image=image)
+            image = augmented['image']
+
+        image = np.transpose(image, (2, 0, 1)).astype(np.float32)      
 
         return {
             'image': torch.tensor(image, dtype=torch.float), 
@@ -51,25 +52,29 @@ class MelonamaDataset:
 
 
 class MelonamaTTADataset:
-    """Only useful for TTA"""
-    def __init__(self, image_paths, augmentations=None, meta_array=None):
+    """Only useful for TTA during evaluation"""
+    def __init__(self, image_paths, augmentations=None, meta_array=None, nc=None):
         self.image_paths = image_paths
         self.augmentations = augmentations 
         self.meta_array = meta_array
+        self.nc = nc
         
     def __len__(self): return len(self.image_paths)
     
     def __getitem__(self, idx):
-        target = torch.zeros(5)
+        # dummy targets
+        target = torch.zeros(5 if self.nc==5 else 10)
         image_path = self.image_paths[idx]
         image = Image.open(image_path)
+        image = self.augmentations(image)
+
         if self.meta_array is not None:
             meta  = self.meta_array[idx]
-        image = self.augmentations(image)
+        
         return {
             'image':image, 
             'target':target
-            } if self.meta_array is None else {
+        } if self.meta_array is None else {
             'image': image, 
             'target': target,
             'meta': torch.tensor(meta, dtype=torch.float)
