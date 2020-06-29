@@ -33,35 +33,6 @@ class WeightedFocalLoss(nn.Module):
         return F_loss.mean()
 
 
-class SeResnext50_32x4D(nn.Module):
-    def __init__(self, pretrained):
-        super(SeResnext50_32x4D, self).__init__()
-        self.base_model = pretrainedmodels.__dict__['se_resnext50_32x4d'](pretrained=pretrained)
-        self.out   = nn.Linear(2048, 1)
-
-    def forward(self, image, target, weights=None, args=None):
-        bs, _, _, _ = image.shape
-        out = self.base_model.features(image)
-        out = F.adaptive_avg_pool2d(out, 1)
-        out = out.reshape(bs, -1)
-        out = self.out(out)
-
-        # Choose loss function based on args
-        if not args.loss=='weighted_bce' and weights is not None:
-            weights_ = weights[target.data.view(-1).long()].view_as(target)
-            loss_func = nn.BCEWithLogitsLoss(reduction='none')
-            loss = loss_func(out, target.view(-1,1).type_as(out))
-            loss_class_weighted = loss * weights_
-            loss = loss_class_weighted.mean()
-        elif args.loss == 'bce':
-            loss = nn.BCEWithLogitsLoss()(out, target.view(-1,1).type_as(out))
-        elif args.loss == 'weighted_focal_loss':
-            loss = WeightedFocalLoss()(out, target.view(-1,1).type_as(out))
-        elif args.loss == 'focal_loss':
-            loss = FocalLoss()(out, target.view(-1,1).type_as(out))
-        return out, loss
-
-
 class EfficientNetBx(nn.Module):
     def __init__(self, pretrained=True, arch_name='efficientnet-b0'):
         super(EfficientNetBx, self).__init__()
