@@ -105,8 +105,12 @@ def run(fold, args):
         age_train = df_train.age_approx.fillna(-5)/100
         meta_array = pd.concat([sex_dummy_train, site_dummy_train, age_train], axis=1).values
         # modify model forward       
-        model = modify_model(model, args)
+        if args.freeze_cnn:
+            model.load_state_dict(torch.load(args.model_path))
         
+        # update the forward pass
+        model = modify_model(model, args)
+       
         # freeze cnn
         if args.freeze_cnn:
             print("\nFreezing CNN layers!\n")
@@ -249,6 +253,7 @@ def main():
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
     parser.add_argument('--tta', default=False, action='store_true')
     parser.add_argument('--freeze_cnn', default=False, action='store_true')
+    parser.add_argument('--model_path', default=None)
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
