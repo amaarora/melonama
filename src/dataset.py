@@ -24,18 +24,20 @@ class MelonamaDataset:
             image = color_constancy(image)
         target = self.targets[idx]
         
+        # Augmentation
         if self.augmentations is not None:
             augmented = self.augmentations(image=image)
             image = augmented['image']
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         
-        # meta augmentation
-        if torch.rand(1)<0.1:
-            meta[:2] = torch.zeros(2)      
-        if torch.rand(1)<0.1:
-            meta[2:8] = torch.zeros(6)      
-        if torch.rand(1)<0.1:
-            meta[8] = torch.tensor(-0.05)      
+        if self.meta_array is not None:
+            # meta augmentation
+            if torch.rand(1)<0.1:
+                meta[:2] = torch.zeros(2)      
+            if torch.rand(1)<0.1:
+                meta[2:8] = torch.zeros(6)      
+            if torch.rand(1)<0.1:
+                meta[8] = torch.tensor(-0.05)      
 
 
         return {
