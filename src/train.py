@@ -93,7 +93,7 @@ def run(fold, args):
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name)
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
-
+   
     meta_array=None
     if args.use_metadata:
         # create meta array
@@ -107,6 +107,12 @@ def run(fold, args):
         # modify model forward       
         model = modify_model(model, args)
         
+        # freeze cnn
+        if args.freeze_cnn:
+            print("\nFreezing CNN layers!\n")
+            for param in model.base_model.parameters(): 
+                param.requires_grad = False        
+
         # add external meta to meta array
         if args.external_csv_path: 
             sex_dummy_ext = pd.get_dummies(df_external['sex'])[
@@ -242,6 +248,7 @@ def main():
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use for training.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
     parser.add_argument('--tta', default=False, action='store_true')
+    parser.add_argument('--freeze_cnn', default=False, action='store_true')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
