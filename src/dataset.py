@@ -29,6 +29,15 @@ class MelonamaDataset:
             image = augmented['image']
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         
+        # meta augmentation
+        if torch.rand(1)<0.1:
+            meta[:2] = torch.zeros(2)      
+        if torch.rand(1)<0.1:
+            meta[2:8] = torch.zeros(6)      
+        if torch.rand(1)<0.1:
+            meta[8] = torch.tensor(-0.05)      
+
+
         return {
             'image': torch.tensor(image, dtype=torch.float), 
             'target': torch.tensor(target, dtype=torch.long)
@@ -62,37 +71,4 @@ class MelonamaTTADataset:
             'image': image, 
             'target': target,
             'meta': torch.tensor(meta, dtype=torch.float)
-        }
-
-
-class MelonamaMetaDataset:
-    def __init__(self, df, data_dir, augmentations=None, cc=False, meta_features=['age_approx', 'sex']):
-        images = df.image_name.tolist()
-        self.image_paths = [os.path.join(data_dir, image_name+'.jpg') for image_name in images]
-        self.targets = df.target
-        self.augmentations = augmentations
-        self.cc = cc
-        self.df = df
-        self.meta_features = meta_features
-
-    def __len__(self): return len(self.image_paths)
-
-    def __getitem__(self, idx):
-        image_path = self.image_paths[idx]
-        image = np.array(Image.open(image_path))
-        meta = np.array(
-            self.df.iloc[idx][self.meta_features].values, dtype=np.float32)
-        if self.cc: 
-            image = color_constancy(image)
-        target = self.targets[idx]
-        
-        if self.augmentations is not None:
-            augmented = self.augmentations(image=image)
-            image = augmented['image']
-        image = np.transpose(image, (2, 0, 1)).astype(np.float32)
-        
-        return {
-            'image': torch.tensor(image, dtype=torch.float), 
-            'meta': torch.tensor(meta, dtype=torch.float), 
-            'target': torch.tensor(target, dtype=torch.long)
         }
