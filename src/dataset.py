@@ -27,10 +27,13 @@ class MelonamaDataset:
         # meta data and augmentations
         if self.meta_array is not None:
             meta  = self.meta_array[idx]
+            # gender
             if torch.rand(1)<0.1:
                 meta[:2] = torch.zeros(2)      
+            # anatom_site
             if torch.rand(1)<0.1:
                 meta[2:8] = torch.zeros(6)      
+            # age_approx
             if torch.rand(1)<0.1:
                 meta[8] = torch.tensor(-0.05)      
 
