@@ -6,6 +6,7 @@ from joblib import Parallel, delayed
 import argparse
 from fastai2.vision.all import *
 from color_constancy import color_constancy
+import albumentations
 
 # to run simply run the command `python resize_images.py`
 
@@ -21,8 +22,10 @@ def pad_and_resize(path, output_path, sz: tuple):
 
 def resize_and_save(path, output_path, sz: tuple):
     fn = os.path.basename(path)  
-    im = Image.open(path)
-    im = im.resize(sz, resample=Image.BILINEAR)
+    im = np.array(Image.open(path))
+    aug = albumentations.Resize(*sz)
+    im = aug(image=im)['image']
+    im = Image.fromarray(im)
     im.save(os.path.join(output_path, fn))
 
 
@@ -59,9 +62,10 @@ if __name__ == '__main__':
         help="Output folder for images."
     )
     parser.add_argument("--mantain_aspect_ratio", action='store_true', default=False, help="Whether to mantain aspect ratio of images.")
-    parser.add_argument("--pad_resize", default=True, type=bool, help="Whether to pad and resize images.")
+    parser.add_argument("--pad_resize", default=False, type=bool, help="Whether to pad and resize images.")
     parser.add_argument("--sz", default=256, type=int, help="Whether to pad and resize images.")
     parser.add_argument("--cc", default=True, action='store_true', help="Whether to do color constancy to the images.")
+    parser.add_argument("--resize_and_save", default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -74,6 +78,10 @@ if __name__ == '__main__':
         print("Adding padding to images if needed and resizing images to square of side {}px.".format(args.sz))
         Parallel(n_jobs=16)(
             delayed(pad_and_resize)(i, args.output_folder, (args.sz, args.sz)) for i in tqdm(images))
+    elif args.resize_and_save:
+        print("Resizing and saving images to size {}".format(args.sz))
+        Parallel(n_jobs=32)(
+            delayed(resize_and_save)(i, args.output_folder, (args.sz, args.sz)) for i in tqdm(images))
     else:
         print("Resizing images to mantain aspect ratio in a way that the shorter side is {}px but images are rectangular.".format(args.sz))
         Parallel(n_jobs=32)(
