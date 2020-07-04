@@ -37,8 +37,12 @@ def predict(args, test_loader, model):
                 predictions = predictions.cpu()
             else: 
                 bs, ncrops, c, h, w = data['image'].shape
-                predictions, _ = model(image=data['image'].view(-1, c, h, w), target=data['target'].view(-1), 
-                    args=args, meta=data['meta'])
+                if args.use_metadata:
+                    predictions, _ = model(image=data['image'].view(-1, c, h, w), target=data['target'].view(-1), 
+                        args=args, meta=data['meta'])
+                else:
+                    predictions, _ = model(image=data['image'].view(-1, c, h, w), target=data['target'].view(-1), 
+                        args=args)
                 predictions = predictions.view(bs, ncrops, -1).mean(1) 
                 predictions = predictions.cpu()
             final_predictions.append(predictions)
@@ -78,7 +82,7 @@ def main():
     parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
     parser.add_argument('--loss', default='weighted_focal_loss', help="Loss fn to use")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
-    parser.add_argument('--use_metadata', default=True, action='store_true', help="Whether to use metadata")
+    parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
     parser.add_argument('--num_crops', default=10, type=int, help="number of crops to use during tta")
 
     args = parser.parse_args()
