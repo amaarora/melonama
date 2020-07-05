@@ -134,7 +134,7 @@ def run(fold, args):
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
-        albumentations.RandomScale(0.075),
+        albumentations.RandomScale(0.05),
         albumentations.Rotate(50),
         albumentations.RandomBrightnessContrast(0.15, 0.1),
         albumentations.Flip(p=0.5),
@@ -179,8 +179,8 @@ def run(fold, args):
 
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=2, threshold=3e-4, mode='min', verbose=True)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer, milestones=[3,5,7,9,11,13,15], gamma=0.5)
 
     es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 
@@ -191,7 +191,8 @@ def run(fold, args):
         auc = metrics.roc_auc_score(valid_targets, predictions)
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
         print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
-        scheduler.step(valid_loss)
+        scheduler.step()
+        for param_group in optimizer.param_groups: print(f"Current Learning Rate: {param_group['lr']}")
         es(
             locals()[f"{args.metric}"], model, 
             model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{auc}.bin",
