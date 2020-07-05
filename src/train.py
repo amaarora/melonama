@@ -180,7 +180,7 @@ def run(fold, args):
     # create optimizer and scheduler for training 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[3,5,7,9,11,13,15], gamma=0.5)
+        optimizer, milestones=[3,5,6,7,8,9,10,11,13,15], gamma=0.5)
 
     es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 

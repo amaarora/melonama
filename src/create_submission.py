@@ -64,6 +64,19 @@ if __name__ == '__main__':
     predictions5 = sum(predictions) / len(predictions)
     predictions5 = torch.sigmoid(torch.tensor(predictions5)).numpy()
 
-    predictions = ((0.4*predictions1) + (0.15*predictions2) + (0.15*predictions3) + (0.15*predictions4) + (0.15*predictions5))  
+
+    # 512x512 (without metadata & external - cdeotte) cropped images without color constancy & without external data : 0.918
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b2_fold_0_480_0.939480330130959.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b2_fold_1_480_0.9207740239406298.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b2_fold_2_480_0.9216102368042023.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b2_fold_3_480_0.9205924804202257.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b2_fold_4_480_0.9208070143598686.npy'
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions6 = sum(predictions) / len(predictions)
+    predictions6 = torch.sigmoid(torch.tensor(predictions6)).numpy()
+
+    predictions = ((0.4*predictions1) + (0.15*predictions2) + (0.1*predictions3) + (0.1*predictions4) + (0.1*predictions5) + (0.15*predictions6))  
     sub['target'] = predictions
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
