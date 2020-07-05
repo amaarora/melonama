@@ -6,7 +6,7 @@ import torch
 if __name__ == '__main__':
     sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/sample_submission.csv')
 
-    # 672x672 (without metadata)
+    # 672x672 (without metadata) full images with color constancy & external data
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_0_672_0.9312387721627744.npy',
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_1_672_0.9136423504768555.npy',
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     predictions1 = sum(predictions) / len(predictions)
     predictions1 = torch.sigmoid(torch.tensor(predictions1)).numpy()
 
-    #256x256 (with metadata)
+    #256x256 (with metadata) full images with color constancy & external data 
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_0_256_0.9247324845739281.npy',
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_1_256_0.9038870463525716.npy',
@@ -29,8 +29,8 @@ if __name__ == '__main__':
     predictions = [np.load(path) for path in np_array_paths]
     predictions2 = sum(predictions) / len(predictions)
     predictions2 = torch.sigmoid(torch.tensor(predictions2)).numpy()
-
-    # 384x384 (with metadata)
+ 
+    # 384x384 (with metadata) full images with color constancy & external data: 0.927
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_0_384_0.9306738004113618.npy',
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_1_384_0.916072911542388.npy',
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     predictions3 = torch.sigmoid(torch.tensor(predictions3)).numpy()
 
 
-    # 352x352 (without metadata)
+    # 352x352 (without metadata) cropped images with color constancy & external data: 0.924
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_0_352_0.9193366138144706.npy',
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_1_352_0.9144833933700429.npy',
@@ -52,7 +52,18 @@ if __name__ == '__main__':
     predictions4 = sum(predictions) / len(predictions)
     predictions4 = torch.sigmoid(torch.tensor(predictions4)).numpy()
 
+    # 224x224 (without metadata & external - cdeotte) cropped images without color constancy & without external data : 0.918
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_0_224_0.9242182821734489.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_1_224_0.9160147261849977.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_2_224_0.8768109802592561.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_3_224_0.8920647690257042.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficient_net_fold_4_224_0.8995808691146435.npy'
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions5 = sum(predictions) / len(predictions)
+    predictions5 = torch.sigmoid(torch.tensor(predictions5)).numpy()
 
-    predictions = ((0.4*predictions1) + (0.1*predictions2) + (0.2*predictions3) + (0.2*predictions4))
+    predictions = ((0.4*predictions1) + (0.15*predictions2) + (0.15*predictions3) + (0.15*predictions4) + (0.15*predictions5))  
     sub['target'] = predictions
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
