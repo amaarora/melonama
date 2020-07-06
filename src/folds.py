@@ -81,12 +81,14 @@ def get_distribution(y_vals):
 
 
 if __name__ == '__main__':
-    input_path = "/home/ubuntu/repos/kaggle/melonama/data/"
+    input_path = "/home/ubuntu/repos/kaggle/melonama/data/external/isic2019/"
     kf = model_selection.StratifiedKFold(n_splits=5)
-    df = pd.read_csv(os.path.join(input_path, 'train.csv'))
+    df = pd.read_csv(os.path.join(input_path, 'ISIC_2019_Training_GroundTruth.csv'))
+    onehot = df[['MEL', 'NV', 'BCC', 'AK', 'BKL', 'DF', 'VASC', 'SCC', 'UNK']].values
+    df['target'] = [np.where(r==1)[0][0] for r in onehot]
     df['kfold'] = -1
     df = df.sample(frac=1).reset_index(drop=True)
     targets = df.target.values
-    for fold, (train_index, test_index) in enumerate(kf.split(X=df, y=targets)):
+    for fold, (train_index, test_index) in enumerate(kf.split(X=df[['image']], y=targets)):
         df.loc[test_index, 'kfold'] = fold
     df.to_csv(os.path.join(input_path, "train_folds.csv"), index=False)
