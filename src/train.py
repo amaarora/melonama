@@ -59,9 +59,10 @@ def evaluate(args, valid_loader, model):
             for key, value in data.items():
                 data[key] = value.to(args.device)
             preds, loss = model(**data, args=args)
-            losses.update(loss.item(), valid_loader.batch_size)
-            preds = preds.cpu()
-            final_preds.append(preds)
+            if args.loss == 'crossentropy': preds=preds.argmax(1)
+            losses.update(loss.item(), valid_loader.batch_size) 
+            preds = preds.cpu().numpy()
+            final_preds.extend(preds)
             tk0.set_postfix(loss=losses.avg)
     return final_preds, losses.avg
 
@@ -73,6 +74,10 @@ def run(fold, args):
 
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
+    if args.loss == 'crossentropy':
+        diag_to_ix = {v:i for i,v in enumerate(sorted(list(set(df.diagnosis))))}
+        ix_to_diag = {v:i for i,v in diag_to_ix.items()}    
+
     if args.external_csv_path: 
         print("External data at {} will be added to all training folds.".format(Path(args.external_csv_path).parent))
         df_external = pd.read_csv(args.external_csv_path)
@@ -90,7 +95,8 @@ def run(fold, args):
 
     # create model
     if 'efficient_net' in args.model_name:
-        model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name)
+        model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name, 
+            ce=args.loss=='crossentropy')
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
    
@@ -161,6 +167,9 @@ def run(fold, args):
         train_images = train_images+external_images
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
+    if args.loss == 'crossentropy':
+        df_train['diagnosis'] = df_train.diagnosis.map(diag_to_ix)
+        train_targets = df_train.diagnosis.values
 
     assert len(train_images) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
@@ -168,6 +177,9 @@ def run(fold, args):
     valid_images = df_valid.image_name.tolist()
     valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
+    if args.loss == 'crossentropy':
+        df_valid['diagnosis'] = df_valid.diagnosis.map(diag_to_ix)
+        valid_targets = df_valid.diagnosis.values 
 
     # create train and valid dataset, dont use color constancy as already preprocessed in directory
     train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc, meta_array=meta_array)
@@ -188,16 +200,22 @@ def run(fold, args):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not (args.loss == 'weighted_bce') else class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack(preds).ravel()
-        auc = metrics.roc_auc_score(valid_targets, predictions)
+        
+        if args.loss=='crossentropy':
+            accuracy =  metrics.accuracy_score(valid_targets, predictions)
+        else:
+            auc = metrics.roc_auc_score(valid_targets, predictions)
+
         preds_df = pd.DataFrame({'predictions': predictions, 'targets': valid_targets, 'valid_image_paths': valid_image_paths})
-        print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, AUC: {auc}")
+        print(f"Epoch: {epoch}, Train loss: {train_loss}, Valid loss: {valid_loss}, Valid Score: {locals()[f'{args.metric}']}")
+        
         scheduler.step()
         for param_group in optimizer.param_groups: print(f"Current Learning Rate: {param_group['lr']}")
         es(
             locals()[f"{args.metric}"], model, 
-            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{auc}.bin",
+            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
             preds_df=preds_df, 
-            df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{auc}.bin",
+            df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
             args=args
             )
         if es.early_stop:

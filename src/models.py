@@ -7,12 +7,13 @@ from loss import WeightedFocalLoss
 
 
 class EfficientNetBx(nn.Module):
-    def __init__(self, pretrained=True, arch_name='efficientnet-b0'):
+    def __init__(self, pretrained=True, arch_name='efficientnet-b0', ce=False):
         super(EfficientNetBx, self).__init__()
         self.pretrained = pretrained
+        self.ce = ce
         self.base_model = EfficientNet.from_pretrained(arch_name) if pretrained else EfficientNet.from_name(arch_name)
         nftrs = self.base_model._fc.in_features
-        self.base_model._fc = nn.Linear(nftrs, 1)
+        self.base_model._fc = nn.Linear(nftrs, 1) if not ce else nn.Linear(nftrs, 9) #predict diagnosis instead
 
     def forward(self, image, target, weights=None, args=None):
         out = self.base_model(image)  
@@ -26,7 +27,8 @@ class EfficientNetBx(nn.Module):
             loss = nn.BCEWithLogitsLoss()(out, target.view(-1,1).type_as(out))
         elif args.loss == 'weighted_focal_loss':
             loss = WeightedFocalLoss()(out, target.view(-1,1).type_as(out))
-        else: 
+        elif args.loss == 'crossentropy':
+            loss = nn.CrossEntropyLoss()(out, target) 
+        else:
             raise ValueError("loss function not found.")
         return out, loss
-
