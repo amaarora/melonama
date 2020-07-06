@@ -77,6 +77,7 @@ if __name__ == '__main__':
     predictions6 = sum(predictions) / len(predictions)
     predictions6 = torch.sigmoid(torch.tensor(predictions6)).numpy()
 
-    predictions = ((0.4*predictions1) + (0.15*predictions2) + (0.1*predictions3) + (0.1*predictions4) + (0.1*predictions5) + (0.15*predictions6))  
+    tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
+    predictions = 0.95*((0.5*predictions1) + (0.1*predictions2) + (0.1*predictions3) + (0.1*predictions4) + (0.1*predictions5) + (0.1*predictions6))  + 0.05*(tabular_sub)
     sub['target'] = predictions
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
