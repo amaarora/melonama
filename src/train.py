@@ -99,7 +99,13 @@ def run(fold, args):
             ce=args.loss=='crossentropy')
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
-   
+    
+    if args.model_path is not None:
+        print("Loading pretrained model and updating final layer.")
+        model.load_state_dict(torch.load(args.model_path))
+        nftrs = model.base_model._fc.in_features
+        model.base_model._fc = nn.Linear(nftrs, 1)
+
     meta_array=None
     if args.use_metadata:
         # create meta array
