@@ -24,8 +24,8 @@ tz = pytz.timezone('Australia/Sydney')
 syd_now = datetime.now(tz)
 
 
-def train_one_epoch(args, train_loader, model, optimizer, weights):
-    if args.loss == 'weighted_bce': weights = weights.to(args.device)
+def train_one_epoch(args, train_loader, model, optimizer, weights=None):
+    if args.loss.startswith('weighted'): weights = weights.to(args.device)
     losses = AverageMeter()
     model.train()
     if args.accumulation_steps > 1: 
@@ -37,7 +37,7 @@ def train_one_epoch(args, train_loader, model, optimizer, weights):
             data[key] = value.to(args.device)
         if args.accumulation_steps == 1 and b_idx == 0:
             optimizer.zero_grad()
-        _, loss = model(**data, args=args)
+        _, loss = model(**data, args=args, weights=weights)
 
         with torch.set_grad_enabled(True):
             loss.backward()
@@ -59,7 +59,8 @@ def evaluate(args, valid_loader, model):
             for key, value in data.items():
                 data[key] = value.to(args.device)
             preds, loss = model(**data, args=args)
-            if args.loss == 'crossentropy': preds=preds.argmax(1)
+            if args.loss == 'crossentropy' or args.loss == 'weighted_cross_entropy': 
+                preds=preds.argmax(1)
             losses.update(loss.item(), valid_loader.batch_size) 
             preds = preds.cpu().numpy()
             final_preds.extend(preds)
@@ -74,7 +75,7 @@ def run(fold, args):
 
     # get training and valid data    
     df = pd.read_csv(args.training_folds_csv)
-    if args.loss == 'crossentropy':
+    if args.loss == 'crossentropy' and not args.isic2019:
         diag_to_ix = {v:i for i,v in enumerate(sorted(list(set(df.diagnosis))))}
         ix_to_diag = {v:i for i,v in diag_to_ix.items()}    
 
@@ -86,17 +87,19 @@ def run(fold, args):
     print(f"Running for K-Fold {fold}; train_df: {df_train.shape}, valid_df: {df_valid.shape}")
 
     # calculate weights for NN loss
-    weights = len(df_train)/df_train.target.value_counts().values 
+    weights = len(df)/df.target.value_counts().values 
     class_weights = torch.FloatTensor(weights)
     if args.loss == 'weighted_bce': 
         print(f"assigning weights {weights} to loss fn.")
     if args.loss == 'focal_loss': 
         print("Focal loss will be used for training.")
-
+    if args.loss == 'weighted_cross_entropy': 
+        print(f"assigning weights {weights} to loss fn.")
+    
     # create model
     if 'efficient_net' in args.model_name:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained, arch_name=args.arch_name, 
-            ce=args.loss=='crossentropy')
+            ce=(args.loss=='crossentropy' or args.loss == 'weighted_cross_entropy' or args.load_pretrained_2019))
     else:
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
     
@@ -167,7 +170,7 @@ def run(fold, args):
     print(f"\nUsing train augmentations: {train_aug}\n")
 
     # get train and valid images & targets and add external data if required (external data only contains melonama data)    
-    train_images = df_train.image_name.tolist()
+    train_images = df_train.image_name.tolist() 
     if args.external_csv_path:
         external_images = df_external.image.tolist()
         train_images = train_images+external_images
@@ -180,7 +183,7 @@ def run(fold, args):
     assert len(train_images) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
     # same for valid dataframe
-    valid_images = df_valid.image_name.tolist()
+    valid_images = df_valid.image_name.tolist() 
     valid_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in valid_images]
     valid_targets = df_valid.target
     if args.loss == 'crossentropy':
@@ -203,11 +206,11 @@ def run(fold, args):
     es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
 
     for epoch in range(args.epochs):
-        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not (args.loss == 'weighted_bce') else class_weights)
+        train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.loss.startswith('weighted') else class_weights)
         preds, valid_loss = evaluate(args, valid_loader, model)
         predictions = np.vstack(preds).ravel()
         
-        if args.loss=='crossentropy':
+        if args.loss=='crossentropy' or args.loss=='weighted_cross_entropy':
             accuracy =  metrics.accuracy_score(valid_targets, predictions)
         else:
             auc = metrics.roc_auc_score(valid_targets, predictions)
@@ -279,6 +282,8 @@ def main():
     parser.add_argument('--tta', default=False, action='store_true')
     parser.add_argument('--freeze_cnn', default=False, action='store_true')
     parser.add_argument('--model_path', default=None)
+    parser.add_argument('--isic2019', default=False, action='store_true')
+    parser.add_argument('--load_pretrained_2019', default=False, action='store_true')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
