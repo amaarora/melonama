@@ -81,7 +81,7 @@ def run(fold, args):
 
     if args.external_csv_path: 
         print("External data at {} will be added to all training folds.".format(Path(args.external_csv_path).parent))
-        df_external = pd.read_csv(args.external_csv_path)
+        df_external = pd.read_csv(args.external_csv_path)      
     df_train = df.query(f"kfold != {fold}").reset_index(drop=True)
     df_valid = df.query(f"kfold == {fold}").reset_index(drop=True)
     print(f"Running for K-Fold {fold}; train_df: {df_train.shape}, valid_df: {df_valid.shape}")
@@ -173,6 +173,8 @@ def run(fold, args):
     train_images = df_train.image_name.tolist() 
     if args.external_csv_path:
         external_images = df_external.image.tolist()
+        if args.exclude_outliers_2019:
+            external_images = np.load('/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019.npy').tolist()
         train_images = train_images+external_images
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
@@ -284,6 +286,7 @@ def main():
     parser.add_argument('--model_path', default=None)
     parser.add_argument('--isic2019', default=False, action='store_true')
     parser.add_argument('--load_pretrained_2019', default=False, action='store_true')
+    parser.add_argument('--exclude_outliers_2019', default=False, action='store_true')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
@@ -301,6 +304,7 @@ def main():
     print(f"oof_df saved to /home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv")
 
     print(f'\n\n OOF AUC: {roc_auc_score(oof_df.targets, oof_df.predictions)}')
+
 
 if __name__=='__main__':
     main()
