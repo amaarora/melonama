@@ -69,9 +69,13 @@ if __name__ == '__main__':
 
 
     # 384x384 (without metadata) with color constancy & external  
-    # 0.931 PB
+    # Unique ID: 67-71 (0.935)
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_0_384_0.9392967794006613.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_1_384_0.9222934552052092.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_2_384_0.9111322333305092.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_3_384_0.8982232948704804.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_4_384_0.9107568159730032.npy'
     ]
     predictions = [np.load(path) for path in np_array_paths]
     predictions7 = sum(predictions) / len(predictions)
