@@ -68,11 +68,22 @@ if __name__ == '__main__':
     predictions6 = torch.sigmoid(torch.tensor(predictions6)).numpy()
 
 
+    # 384x384 (without metadata) with color constancy & external  
+    # 0.931 PB
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_0_384_0.9392967794006613.npy',
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions7 = sum(predictions) / len(predictions)
+    predictions7 = torch.sigmoid(torch.tensor(predictions7)).numpy()
+
+
     tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
-    predictions = 0.9*(
+    predictions = 0.85*(
         #672x672           
-        (0.3*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.3*predictions6) 
-        )  + 0.1*(tabular_sub)
+        (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
+        )  + 0.15*(tabular_sub)
+
     sub['target'] = predictions
 
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
