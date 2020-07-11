@@ -175,7 +175,7 @@ def run(fold, args):
         external_images = df_external.image.tolist()
         if args.exclude_outliers_2019:
             # from EDA notebook
-            external_images = np.load('/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019.npy').tolist()
+            external_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019_{args.sz}.npy').tolist()
         train_images = train_images+external_images
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
