@@ -128,6 +128,9 @@ if __name__ == '__main__':
         (0.25*predictions6) 
 
 )  + 0.1*(tabular_sub)
+
+    predictions_95 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
+    predictions = (0.4*rankdata(predictions)) + (0.6*rankdata(predictions_95))
     
     sub['target'] = predictions
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
