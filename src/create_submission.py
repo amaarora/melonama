@@ -60,12 +60,9 @@ if __name__ == '__main__':
 
 
     # 512x512 (without metadata & external) with color constancy  
-    # Unique ID: 65 (0.932)
+    # Unique ID: 65 (0.928)
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_0_512_0.9082806113150564.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_1_512_0.9258083797493798.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_2_512_0.9076188257222739.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_3_512_0.8965315077280627.npy'
     ]
     predictions = [np.load(path) for path in np_array_paths]
     predictions6 = sum(predictions) / len(predictions)
@@ -76,61 +73,26 @@ if __name__ == '__main__':
     # Unique ID: 67-71 (0.935)
     np_array_paths = [
         '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_0_384_0.9392967794006613.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_1_384_0.9222934552052092.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_2_384_0.9111322333305092.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_3_384_0.8982232948704804.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_4_384_0.9107568159730032.npy'
+        # '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_1_384_0.9222934552052092.npy', 
+        # '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_2_384_0.9111322333305092.npy', 
+        # '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_3_384_0.8982232948704804.npy', 
+        # '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_4_384_0.9107568159730032.npy'
     ]
     predictions = [np.load(path) for path in np_array_paths]
     predictions7 = sum(predictions) / len(predictions)
     predictions7 = torch.sigmoid(torch.tensor(predictions7)).numpy()
 
 
-    # 256 x 256 (new fold)
-    # Unique ID: 201-205
-    np_array_paths = [
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_0_256_0.910391788541527.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_1_256_0.8769002595476455.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_2_256_0.906472486704409.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_3_256_0.9064916608569744.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_4_256_0.9216608585374172.npy'
-    ]
-    predictions = [np.load(path) for path in np_array_paths]
-    predictions8 = sum(predictions) / len(predictions)
-    predictions8 = torch.sigmoid(torch.tensor(predictions8)).numpy()    
-
-
-    # 384 x 384 (new fold)
-    # Unique ID: 
-    np_array_paths = [
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_0_384_0.9032805581644975.npy',
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_1_384_0.899074656220277.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_2_384_0.9091624313775948.npy', 
-        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b1_fold_4_384_0.9076587377709572.npy'
-    ]
-    predictions = [np.load(path) for path in np_array_paths]
-    predictions9 = sum(predictions) / len(predictions)
-    predictions9 = torch.sigmoid(torch.tensor(predictions9)).numpy()    
-
-
     tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
-    predictions = 0.9*(
-       
-        # 672x672           
-        (0.25*predictions1) + 
-        # 256 x 256
-        (0.15*(0.5*predictions2 + 0.5*predictions8)) + 
-        # 224 x 224
-        (0.1*predictions5) + 
-        # 384 x 384
-        (0.25*(0.33*predictions3 + (0.33*predictions9) + (0.33*predictions7))) + 
-        # 512 x 512
-        (0.25*predictions6) 
-
-)  + 0.1*(tabular_sub)
-
-    predictions_95 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
-    predictions = (0.4*rankdata(predictions)) + (0.6*rankdata(predictions_95))
+    predictions = 0.85*(
+        #672x672           
+        (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
+        )  + 0.15*(tabular_sub)
     
+    predictions_95 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
+    predictions = (0.35*rankdata(predictions)) + (0.65*rankdata(predictions_95))
+
     sub['target'] = predictions
+
+
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
