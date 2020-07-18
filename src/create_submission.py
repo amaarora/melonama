@@ -82,15 +82,25 @@ if __name__ == '__main__':
     predictions7 = sum(predictions) / len(predictions)
     predictions7 = torch.sigmoid(torch.tensor(predictions7)).numpy()
 
+    # 768x768 (without metadata) with color constancy & external  
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_0_768_0.9122031396752985.npy',
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions8 = sum(predictions) / len(predictions)
+    predictions8 = torch.sigmoid(torch.tensor(predictions8)).numpy()
 
     tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
-    predictions = 0.85*(
+    predictions_m1 = 0.85*(
         #672x672           
         (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
         )  + 0.15*(tabular_sub)
     
-    predictions_95 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
-    predictions = (0.35*rankdata(predictions)) + (0.65*rankdata(predictions_95))
+    predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
+    predictions_m3 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission952.csv').target.values
+    predictions_m4 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission946_cdeotte.csv').target.values 
+    
+    predictions = (0.35*rankdata(predictions_m1)) + 0.65*(0.8*rankdata(predictions_m2) + 0.1*rankdata(predictions_m3) + 0.1*rankdata(predictions_m4))
 
     sub['target'] = predictions
 
