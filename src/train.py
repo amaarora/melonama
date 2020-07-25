@@ -104,7 +104,7 @@ def run(fold, args):
         model = MODEL_DISPATCHER[args.model_name](pretrained=args.pretrained)
     
     if args.model_path is not None:
-        print("Loading pretrained model and updating final layer.")
+        print(f"Loading pretrained model and updating final layer from {args.model_path}")
         model.load_state_dict(torch.load(args.model_path))
         nftrs = model.base_model._fc.in_features
         model.base_model._fc = nn.Linear(nftrs, 1)
@@ -149,7 +149,7 @@ def run(fold, args):
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
-        albumentations.RandomScale(0.05),
+        albumentations.RandomScale(0.075),
         albumentations.Rotate(50),
         albumentations.RandomBrightnessContrast(0.15, 0.1),
         albumentations.Flip(p=0.5),
