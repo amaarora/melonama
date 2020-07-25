@@ -80,7 +80,6 @@ def run(fold, args):
         ix_to_diag = {v:i for i,v in diag_to_ix.items()}    
 
     if args.external_csv_path: 
-        print("External data at {} will be added to all training folds.".format(Path(args.external_csv_path).parent))
         df_external = pd.read_csv(args.external_csv_path)      
     df_train = df.query(f"kfold != {fold}").reset_index(drop=True)
     df_valid = df.query(f"kfold == {fold}").reset_index(drop=True)
@@ -176,6 +175,7 @@ def run(fold, args):
         if args.exclude_outliers_2019:
             # from EDA notebook
             external_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019_{args.sz}.npy').tolist()
+        print(f"\n\n{len(external_images)} external images will be added to each training fold.")
         train_images = train_images+external_images
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
@@ -193,6 +193,8 @@ def run(fold, args):
         df_valid['diagnosis'] = df_valid.diagnosis.map(diag_to_ix)
         valid_targets = df_valid.diagnosis.values 
 
+
+    print(f"\n\n Total Train images: {len(train_image_paths)}, Total val: {len(valid_image_paths)}\n\n")
     # create train and valid dataset, dont use color constancy as already preprocessed in directory
     train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc, meta_array=meta_array)
     valid_dataset = MelonamaDataset(valid_image_paths, valid_targets, valid_aug, cc=args.cc, meta_array=meta_array)
