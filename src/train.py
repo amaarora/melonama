@@ -182,8 +182,15 @@ def run(fold, args):
     if args.loss == 'crossentropy':
         df_train['diagnosis'] = df_train.diagnosis.map(diag_to_ix)
         train_targets = df_train.diagnosis.values
+    
+    if args.use_psuedo_label:
+        print("Using pseudo labelled images from test and adding to train.")
+        pseudo_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/pseudo_test_2020_{args.sz}.npy').tolist()
+        pseudo_targets = np.ones(len(pseudo_images))
+        train_image_paths.extend(pseudo_images)
+        train_targets = np.concatenate([train_targets, pseudo_targets])
 
-    assert len(train_images) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
+    assert len(train_image_paths) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
     # same for valid dataframe
     valid_images = df_valid.image_name.tolist() 
@@ -290,6 +297,7 @@ def main():
     parser.add_argument('--isic2019', default=False, action='store_true')
     parser.add_argument('--load_pretrained_2019', default=False, action='store_true')
     parser.add_argument('--exclude_outliers_2019', default=False, action='store_true')
+    parser.add_argument('--use_psuedo_label', default=False, action='store_true')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
