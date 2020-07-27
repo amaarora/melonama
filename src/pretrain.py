@@ -116,8 +116,8 @@ def run(fold, args):
     valid_targets = np.load(args.valid_targets,  allow_pickle=True)
 
     weights = torch.FloatTensor(pd.Series(train_targets).value_counts().values)
-    print(f"assigning weights {weights}")
 
+    print(f"\n\n Total Train images: {len(train_image_paths)}, Total val: {len(valid_image_paths)}\n\n")
 
     # create train and valid dataset, dont use color constancy as already preprocessed in directory
     train_dataset = MelonamaDataset(train_image_paths, train_targets, train_aug, cc=args.cc)
