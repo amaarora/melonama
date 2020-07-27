@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument("--mantain_aspect_ratio", action='store_true', default=False, help="Whether to mantain aspect ratio of images.")
     parser.add_argument("--pad_resize", default=False, type=bool, help="Whether to pad and resize images.")
     parser.add_argument("--sz", default=256, type=int, help="Whether to pad and resize images.")
-    parser.add_argument("--cc", default=True, action='store_true', help="Whether to do color constancy to the images.")
+    parser.add_argument("--cc", default=False, action='store_true', help="Whether to do color constancy to the images.")
     parser.add_argument("--resize_and_save", default=False, action='store_true')
     parser.add_argument("--centercrop", default=False, action='store_true')
 
@@ -101,5 +101,8 @@ if __name__ == '__main__':
             delayed(resize_min_wh)(i, args.output_folder) for i in tqdm(images))
     else:
         print("Resizing images to mantain aspect ratio in a way that the shorter side is {}px but images are rectangular.".format(args.sz))
+        if not os.path.exists(args.output_folder):
+            os.makedirs(args.output_folder)
+        print(args)
         Parallel(n_jobs=32)(
             delayed(resize_and_mantain)(i, args.output_folder, (args.sz, args.sz), args) for i in tqdm(images))

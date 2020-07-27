@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd 
 import glob
 import torch
+from scipy.stats import rankdata
 
 if __name__ == '__main__':
     sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/sample_submission.csv')
@@ -81,13 +82,31 @@ if __name__ == '__main__':
     predictions7 = sum(predictions) / len(predictions)
     predictions7 = torch.sigmoid(torch.tensor(predictions7)).numpy()
 
+    # 768x768 (without metadata) with color constancy & external  
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b6_fold_0_768_0.9122031396752985.npy',
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions8 = sum(predictions) / len(predictions)
+    predictions8 = torch.sigmoid(torch.tensor(predictions8)).numpy()
 
     tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
-    predictions = 0.85*(
+    predictions_m1 = 0.85*(
         #672x672           
         (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
         )  + 0.15*(tabular_sub)
+    
+    predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
+    predictions_m3 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission952.csv').target.values
+    predictions_m4 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission946_cdeotte.csv').target.values 
+    predictions_m5 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_b.csv').target.values 
+    predictions_m6 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_median.csv').target.values 
+    
+    predictions = (0.25*rankdata(predictions_m1)) + 0.25*(
+        0.75*rankdata(predictions_m2) + 0.125*rankdata(predictions_m3) + 0.125*rankdata(predictions_m4)
+        ) + 0.2*rankdata(predictions_m5) + 0.3*rankdata(predictions_m6)
 
     sub['target'] = predictions
+
 
     sub.to_csv("/home/ubuntu/repos/kaggle/melonama/data/output/submission.csv", index=False)
