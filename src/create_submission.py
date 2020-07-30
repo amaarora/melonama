@@ -96,15 +96,10 @@ if __name__ == '__main__':
         (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
         )  + 0.15*(tabular_sub)
     
-    predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_950.csv').target.values
-    predictions_m3 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission952.csv').target.values
-    predictions_m4 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission946_cdeotte.csv').target.values 
-    predictions_m5 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_b.csv').target.values 
-    predictions_m6 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/submission_median.csv').target.values 
-    
-    predictions = (0.25*rankdata(predictions_m1)) + 0.25*(
-        0.75*rankdata(predictions_m2) + 0.125*rankdata(predictions_m3) + 0.125*rankdata(predictions_m4)
-        ) + 0.2*rankdata(predictions_m5) + 0.3*rankdata(predictions_m6)
+    predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/ENS_1.csv')
+    predictions_m2['target'] = predictions_m2.target.astype(float)
+
+    predictions = ((0.5*rankdata(predictions_m1)) + 0.5*(rankdata(predictions_m2.target)))/2
 
     sub['target'] = predictions
 
