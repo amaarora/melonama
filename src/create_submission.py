@@ -90,17 +90,30 @@ if __name__ == '__main__':
     predictions8 = sum(predictions) / len(predictions)
     predictions8 = torch.sigmoid(torch.tensor(predictions8)).numpy()
 
+    # 384x384 segmented 
+    np_array_paths = [
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_2_384_0.8696742856411961.npy',
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_3_384_0.909114525892704.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_4_384_0.8911082580284102.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_0_384_0.9029329318936876.npy', 
+        '/home/ubuntu/repos/kaggle/melonama/data/output/efficientnet-b3_fold_1_384_0.9143603280915035.npy'
+    ]
+    predictions = [np.load(path) for path in np_array_paths]
+    predictions9 = sum(predictions) / len(predictions)
+    predictions9 = torch.sigmoid(torch.tensor(predictions9)).numpy()
+
     tabular_sub = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/submission_tabular.csv').target.values
     predictions_m1 = 0.85*(
         #672x672           
-        (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7)
-        )  + 0.15*(tabular_sub)
+        (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7) 
+        )  + 0.15*predictions9
     
+    np.save('/home/ubuntu/repos/kaggle/melonama/data/output/pseudo_labels.npy', predictions_m1)
+
     predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/ENS_1.csv')
     predictions_m2['target'] = predictions_m2.target.astype(float)
 
     predictions = ((0.5*rankdata(predictions_m1)) + 0.5*(rankdata(predictions_m2.target)))/2
-
     sub['target'] = predictions
 
 
