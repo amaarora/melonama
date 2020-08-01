@@ -108,7 +108,7 @@ if __name__ == '__main__':
         (0.25*predictions1) + (0.1*predictions2) + (0.1*predictions5) + (0.1*predictions3) + (0.25*predictions6) + (0.25*predictions7) 
         )  + 0.15*predictions9
     
-    np.save('/home/ubuntu/repos/kaggle/melonama/data/output/pseudo_labels.npy', predictions_m1)
+    # np.save('/home/ubuntu/repos/kaggle/melonama/data/output/pseudo_labels.npy', predictions_m1)
 
     predictions_m2 = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/external/ENS_1.csv')
     predictions_m2['target'] = predictions_m2.target.astype(float)
