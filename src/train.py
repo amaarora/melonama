@@ -148,7 +148,7 @@ def run(fold, args):
     model = model.to(args.device)
   
     train_aug = albumentations.Compose([
-        albumentations.RandomScale(0.075),
+        albumentations.RandomScale(0.07),
         albumentations.Rotate(50),
         albumentations.RandomBrightnessContrast(0.15, 0.1),
         albumentations.Flip(p=0.5),
