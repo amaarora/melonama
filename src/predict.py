@@ -84,6 +84,7 @@ def main():
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
     parser.add_argument('--num_crops', default=10, type=int, help="number of crops to use during tta")
+    parser.add_argument('--num_tta', default=32, type=int, help="number of crops to use during tta")
 
     args = parser.parse_args()
 
@@ -101,7 +102,10 @@ def main():
     mean = (0.485, 0.456, 0.406)
     std  = (0.229, 0.224, 0.225)
     test_aug = albumentations.Compose([
-        albumentations.CenterCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
+        albumentations.RandomCrop(args.sz, args.sz) if args.sz else albumentations.NoOp(),
+        albumentations.Rotate(15),
+        albumentations.RandomBrightnessContrast(0.15, 0.1),
+        albumentations.Flip(p=0.5),
         albumentations.Normalize(mean, std, max_pixel_value=255.0, always_apply=True),
     ]) if not args.tta else torchvision.transforms.Compose([
         TenCrop(args.sz) if args.num_crops==10 else FiveCrop(args.sz),
@@ -132,17 +136,20 @@ def main():
         test_dataset = MelonamaTTADataset(test_image_paths, test_aug, meta_array=meta_array, nc=args.num_crops)
     else:
         test_dataset = MelonamaDataset(test_image_paths, test_targets, test_aug, meta_array=meta_array)
-    
-    print(f"test dataset: {test_dataset.__class__.__name__}")
-    
-    # create test dataloader
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, shuffle=False, num_workers=4)
 
-    predictions = predict(args, test_loader, model)
-    predictions = np.vstack((predictions)).ravel()
-    np.save(f"{args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy", predictions)
+    np_arrays = []
+    for i, _ in enumerate(range(args.num_tta)):    
+        print(f"test dataset: {test_dataset.__class__.__name__}")
+        # create test dataloader
+        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = args.test_batch_size, shuffle=False, num_workers=4)
+
+        predictions = predict(args, test_loader, model)
+        predictions = np.vstack((predictions)).ravel()
+        np_arrays.append(predictions)
+        print(f"{i+1}/{args.num_tta} predictions complete..")
+    tta_preds = np.mean(np_arrays, axis=0)
+    np.save(f"{args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy", tta_preds)
     print(f"Predictions saved at {args.output_dir}/{args.model_path.split('/')[-1].strip('.bin')}.npy")
-
 
 if __name__ == '__main__':
     main()
