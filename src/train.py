@@ -192,13 +192,6 @@ def run(fold, args):
     if args.loss == 'crossentropy':
         df_train['diagnosis'] = df_train.diagnosis.map(diag_to_ix)
         train_targets = df_train.diagnosis.values
-    
-    if args.use_psuedo_labels:
-        print("Using pseudo labelled images from test and adding to train.")
-        pseudo_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/pseudo_test_2020_{args.sz}.npy').tolist()
-        pseudo_targets = np.ones(len(pseudo_images))
-        train_image_paths.extend(pseudo_images)
-        train_targets = np.concatenate([train_targets, pseudo_targets])
 
     assert len(train_image_paths) == len(train_targets), "Length of train images {} doesnt match length of targets {}".format(len(train_images), len(train_targets))
 
