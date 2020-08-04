@@ -76,14 +76,15 @@ def main():
     #Other parameters
     parser.add_argument('--device', default='cuda', type=str, help="Device on which to run predictions.")
     parser.add_argument('--test_batch_size', default=64, type=int, help="Test batch size.")
-    parser.add_argument('--submission_file', default="/home/ubuntu/repos/kaggle/melonama/data/sample_submission.csv", type=str, help="Test batch size.")
-    parser.add_argument('--output_dir', default="/home/ubuntu/repos/kaggle/melonama/data/output", type=str, help="Test batch size.")
+    parser.add_argument('--submission_file', default="./sample_submission.csv", type=str, help="Test batch size.")
+    parser.add_argument('--output_dir', default="./output", type=str, help="Test batch size.")
     parser.add_argument('--tta', action='store_true', default=False, help="Test batch size.")
     parser.add_argument('--sz', type=int, default=292, help="Test batch size.")
     parser.add_argument('--loss', default='weighted_focal_loss', help="Loss fn to use")
     parser.add_argument('--arch_name', default='efficientnet-b0', help="EfficientNet architecture to use.")
     parser.add_argument('--use_metadata', default=False, action='store_true', help="Whether to use metadata")
     parser.add_argument('--num_crops', default=10, type=int, help="number of crops to use during tta")
+    parser.add_argument('--test_csv_path', default='./test.csv')
 
     args = parser.parse_args()
 
@@ -111,7 +112,7 @@ def main():
     print(f"\ntest augmentations: {test_aug}\n")
 
     # create test images and create dummy targets
-    df_test = pd.read_csv("/home/ubuntu/repos/kaggle/melonama/data/test.csv")
+    df_test = pd.read_csv(args.test_csv_path)
     test_images = df_test.image_name.tolist()
     test_image_paths = [os.path.join(args.test_data_dir, image_name+'.jpg') for image_name in test_images]
     test_targets = np.zeros(len(test_image_paths))        

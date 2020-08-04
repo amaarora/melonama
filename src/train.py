@@ -174,11 +174,11 @@ def run(fold, args):
         external_images = df_external.image.tolist()
         if args.exclude_outliers_2019:
             # from EDA notebook
-            external_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019_{args.sz}.npy').tolist()
+            external_images = np.load(args.clean_external_npy).tolist()
         print(f"\n\n{len(external_images)} external images will be added to each training fold.")
         train_images = train_images+external_images
     if args.use_psuedo_labels:
-        test_df = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/test.csv')
+        test_df = pd.read_csv(args.test_file_path)
         test_images = test_df.image_name.tolist()
         print(f"\n\n{len(test_images)} test images will be added to each training fold.")
         train_images = train_images+test_images
@@ -237,9 +237,9 @@ def run(fold, args):
         for param_group in optimizer.param_groups: print(f"Current Learning Rate: {param_group['lr']}")
         es(
             locals()[f"{args.metric}"], model, 
-            model_path=f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
+            model_path=f"./{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
             preds_df=preds_df, 
-            df_path=f"/home/ubuntu/repos/kaggle/melonama/valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
+            df_path=f"./valid_preds/{syd_now.strftime(r'%d%m%y')}/{args.arch_name}_fold_{fold}_{args.sz}_{locals()[f'{args.metric}']}.bin",
             args=args
             )
         if es.early_stop:
@@ -301,7 +301,9 @@ def main():
     parser.add_argument('--load_pretrained_2019', default=False, action='store_true')
     parser.add_argument('--exclude_outliers_2019', default=False, action='store_true')
     parser.add_argument('--use_psuedo_labels', default=False, action='store_true')
-    parser.add_argument('--pseudo_labels_path', default='/home/ubuntu/repos/kaggle/melonama/data/output/pseudo_labels.npy')
+    parser.add_argument('--pseudo_labels_path', default='./pseudo_labels.npy')
+    parser.add_argument('--clean_external_npy', default='./clean_external_2019_512.npy')
+    parser.add_argument('--test_file_path', default='./test.csv')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
@@ -315,8 +317,8 @@ def main():
     else: 
         oof_df = run(kfolds[0], args)
 
-    oof_df.to_csv(f"/home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv", index=False)
-    print(f"oof_df saved to /home/ubuntu/repos/kaggle/melonama/models/{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv")
+    oof_df.to_csv(f"./{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv", index=False)
+    print(f"oof_df saved to ./{syd_now.strftime(r'%d%m%y')}/{args.model_name}_{args.sz}_oof.csv")
 
     print(f'\n\n OOF AUC: {roc_auc_score(oof_df.targets, oof_df.predictions)}')
 
