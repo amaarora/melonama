@@ -177,16 +177,20 @@ def run(fold, args):
             external_images = np.load(f'/home/ubuntu/repos/kaggle/melonama/data/external/clean_external_2019_{args.sz}.npy').tolist()
         print(f"\n\n{len(external_images)} external images will be added to each training fold.")
         train_images = train_images+external_images
-    if args.use_psuedo_labels:
+    if args.use_pseudo_labels:
         test_df = pd.read_csv('/home/ubuntu/repos/kaggle/melonama/data/test.csv')
         test_images = test_df.image_name.tolist()
-        print(f"\n\n{len(test_images)} test images will be added to each training fold.")
+        
+        if args.pseudo_images_path:
+            test_images = list(np.load(args.pseudo_images_path))
+
+        print(f"\n\n{len(test_images)} test images will be added to each training fold.")        
         train_images = train_images+test_images
 
     train_image_paths = [os.path.join(args.train_data_dir, image_name+'.jpg') for image_name in train_images]
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
 
-    if args.use_psuedo_labels:
+    if args.use_pseudo_labels:
         train_targets = np.concatenate([train_targets, np.load(args.pseudo_labels_path)])
 
     if args.loss == 'crossentropy':
@@ -300,8 +304,9 @@ def main():
     parser.add_argument('--isic2019', default=False, action='store_true')
     parser.add_argument('--load_pretrained_2019', default=False, action='store_true')
     parser.add_argument('--exclude_outliers_2019', default=False, action='store_true')
-    parser.add_argument('--use_psuedo_labels', default=False, action='store_true')
-    parser.add_argument('--pseudo_labels_path', default='/home/ubuntu/repos/kaggle/melonama/data/output/pseudo_labels.npy')
+    parser.add_argument('--use_pseudo_labels', default=False, action='store_true')
+    parser.add_argument('--pseudo_labels_path')
+    parser.add_argument('--pseudo_images_path')
 
     args = parser.parse_args()
     # if args.sz, then print message and convert to int
