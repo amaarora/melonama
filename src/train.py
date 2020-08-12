@@ -182,7 +182,7 @@ def run(fold, args):
         test_images = test_df.image_name.tolist()
         
         if args.pseudo_images_path:
-            test_images = list(np.load(args.pseudo_images_path))
+            test_images = list(np.load(args.pseudo_images_path, allow_pickle=True))
 
         print(f"\n\n{len(test_images)} test images will be added to each training fold.")        
         train_images = train_images+test_images
@@ -191,7 +191,7 @@ def run(fold, args):
     train_targets = df_train.target if not args.external_csv_path else np.concatenate([df_train.target.values, np.ones(len(external_images))])
 
     if args.use_pseudo_labels:
-        train_targets = np.concatenate([train_targets, np.load(args.pseudo_labels_path)])
+        train_targets = np.concatenate([train_targets, np.load(args.pseudo_labels_path, allow_pickle=True)])
 
     if args.loss == 'crossentropy':
         df_train['diagnosis'] = df_train.diagnosis.map(diag_to_ix)
@@ -222,7 +222,7 @@ def run(fold, args):
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=[3,5,6,7,8,9,10,11,13,15], gamma=0.5)
 
-    es = EarlyStopping(patience=6, mode='min' if args.metric=='valid_loss' else 'max')
+    es = EarlyStopping(patience=3, mode='min' if args.metric=='valid_loss' else 'max')
 
     for epoch in range(args.epochs):
         train_loss = train_one_epoch(args, train_loader, model, optimizer, weights=None if not args.loss.startswith('weighted') else class_weights)
