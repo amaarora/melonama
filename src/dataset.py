@@ -6,7 +6,7 @@ from color_constancy import color_constancy
 import os
 
 class MelonamaDataset:
-    def __init__(self, image_paths, targets, augmentations=None, cc=True, meta_array=None):
+    def __init__(self, image_paths, targets, augmentations=None, cc=False, meta_array=None):
         self.image_paths = image_paths
         self.targets = targets
         self.augmentations = augmentations
